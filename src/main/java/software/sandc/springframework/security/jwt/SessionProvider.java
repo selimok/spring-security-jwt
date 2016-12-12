@@ -2,10 +2,10 @@ package software.sandc.springframework.security.jwt;
 
 public interface SessionProvider {
 
-	String createSession(String username);
+	public String createSession(String principal);
 	
-	boolean isSessionValid(String sessionId);
+	public boolean isSessionValid(String sessionId);
 	
-	void invalidateSession(String sessionId);
+	public void invalidateSession(String sessionId);
 	
 }
