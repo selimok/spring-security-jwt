@@ -49,7 +49,8 @@ import software.sandc.springframework.security.jwt.model.exception.TokenRenewalE
 import software.sandc.springframework.security.jwt.util.StringUtils;
 
 public class DefaultJWTService implements JWTService, InitializingBean {
-
+	
+	private static final Integer TEN_YEARS_IN_SECONDS  = 315360000;
 	public static final String SPRING_SECURITY_JWT_KEY_ID_PARAMETER_NAME = "kid";
 	public static final String SPRING_SECURITY_JWT_SESSION_ID_PARAMETER_NAME = "jwtSessionId";
 	public static final String SPRING_SECURITY_JWT_XSRF_PARAMETER_NAME = "xsrf-token";
@@ -152,7 +153,7 @@ public class DefaultJWTService implements JWTService, InitializingBean {
 		boolean ignoreExpiry = true;
 		validate(tokenContainer, ignoreExpiry);
 
-		JwtParser jwtParser = Jwts.parser().setSigningKeyResolver(signingKeyResolver).ignoreExpiry();
+		JwtParser jwtParser = Jwts.parser().setSigningKeyResolver(signingKeyResolver).setAllowedClockSkewSeconds(TEN_YEARS_IN_SECONDS);
 		String jwtToken = tokenContainer.getJwtToken();
 		Jws<Claims> jws = jwtParser.parseClaimsJws(jwtToken);
 		Claims claims = jws.getBody();
@@ -177,7 +178,7 @@ public class DefaultJWTService implements JWTService, InitializingBean {
 		}
 		JwtParser jwtParser = Jwts.parser().setSigningKeyResolver(signingKeyResolver);
 		if (ignoreExpiry) {
-			jwtParser = jwtParser.ignoreExpiry();
+			jwtParser = jwtParser.setAllowedClockSkewSeconds(TEN_YEARS_IN_SECONDS);
 		}
 		String jwtToken = tokenContainer.getJwtToken();
 		try {
@@ -194,12 +195,6 @@ public class DefaultJWTService implements JWTService, InitializingBean {
 		} catch (JwtException e) {
 			throw new InvalidTokenException("JWT Token is invalid.", e);
 		}
-
-		// TODO: Think about general exceptions
-		// catch(Exception e){
-		// throw new InvalidTokenException("JWT Token is invalid.", e);
-		// }
-
 	}
 
 	protected String getPrincipal(Claims claims) {
