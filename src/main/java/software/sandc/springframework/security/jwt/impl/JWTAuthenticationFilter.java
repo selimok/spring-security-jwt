@@ -45,7 +45,7 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
 	protected Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
 			throws AuthenticationException {
 		Authentication authentication = null;
-		JWTContext jwtContext = jwtService.authenticateRequest(request, response);
+		JWTContext jwtContext = jwtService.authenticateJWTRequest(request, response);
 		if(jwtContext != null){
 			authentication = jwtContext.getAuthentication(); 
 		}

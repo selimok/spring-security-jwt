@@ -12,9 +12,11 @@ import software.sandc.springframework.security.jwt.model.exception.InvalidTokenE
 
 public interface JWTService {
 
-	public JWTContext authenticateRequest(HttpServletRequest request, HttpServletResponse response);
+	public JWTContext authenticateJWTRequest(HttpServletRequest request, HttpServletResponse response);
 
 	public JWTContext authenticateLoginRequest(Credentials credentials, HttpServletRequest request, HttpServletResponse response);
+	
+	public JWTContext createAndAttach(String principal, HttpServletRequest request, HttpServletResponse response);
 
 	/**
 	 * Creates {@link JWTContext} for given principal. A {@link JWTContext}

@@ -49,8 +49,8 @@ import software.sandc.springframework.security.jwt.model.exception.TokenRenewalE
 import software.sandc.springframework.security.jwt.util.StringUtils;
 
 public class DefaultJWTService implements JWTService, InitializingBean {
-	
-	private static final Integer TEN_YEARS_IN_SECONDS  = 315360000;
+
+	private static final Integer TEN_YEARS_IN_SECONDS = 315360000;
 	public static final String SPRING_SECURITY_JWT_KEY_ID_PARAMETER_NAME = "kid";
 	public static final String SPRING_SECURITY_JWT_SESSION_ID_PARAMETER_NAME = "jwtSessionId";
 	public static final String SPRING_SECURITY_JWT_XSRF_PARAMETER_NAME = "xsrf-token";
@@ -71,7 +71,7 @@ public class DefaultJWTService implements JWTService, InitializingBean {
 		this.userDetailsService = userDetailsService;
 	}
 
-	public JWTContext authenticateRequest(HttpServletRequest request, HttpServletResponse response) {
+	public JWTContext authenticateJWTRequest(HttpServletRequest request, HttpServletResponse response) {
 		JWTContext jwtContext = null;
 		try {
 			TokenContainer tokenContainer = jwtRequestResponseHandler.getTokenFromRequest(request);
@@ -102,6 +102,15 @@ public class DefaultJWTService implements JWTService, InitializingBean {
 				jwtContext = create(principal);
 				handleJWTContext(request, response, jwtContext);
 			}
+		}
+		return jwtContext;
+	}
+
+	public JWTContext createAndAttach(String principal, HttpServletRequest request, HttpServletResponse response) {
+		JWTContext jwtContext = null;
+		if (principal != null) {
+			jwtContext = create(principal);
+			handleJWTContext(request, response, jwtContext);
 		}
 		return jwtContext;
 	}
@@ -153,7 +162,8 @@ public class DefaultJWTService implements JWTService, InitializingBean {
 		boolean ignoreExpiry = true;
 		validate(tokenContainer, ignoreExpiry);
 
-		JwtParser jwtParser = Jwts.parser().setSigningKeyResolver(signingKeyResolver).setAllowedClockSkewSeconds(TEN_YEARS_IN_SECONDS);
+		JwtParser jwtParser = Jwts.parser().setSigningKeyResolver(signingKeyResolver)
+				.setAllowedClockSkewSeconds(TEN_YEARS_IN_SECONDS);
 		String jwtToken = tokenContainer.getJwtToken();
 		Jws<Claims> jws = jwtParser.parseClaimsJws(jwtToken);
 		Claims claims = jws.getBody();
