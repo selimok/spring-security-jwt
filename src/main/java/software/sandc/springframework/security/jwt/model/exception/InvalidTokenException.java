@@ -3,7 +3,7 @@ package software.sandc.springframework.security.jwt.model.exception;
 import org.springframework.security.core.AuthenticationException;
 
 /**
- * TODO: Document
+ * Thrown if token is not valid.
  * 
  * @author selimok
  *

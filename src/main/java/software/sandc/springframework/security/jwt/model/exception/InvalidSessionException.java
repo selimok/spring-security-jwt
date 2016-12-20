@@ -3,7 +3,7 @@ package software.sandc.springframework.security.jwt.model.exception;
 import org.springframework.security.core.AuthenticationException;
 
 /**
- * TODO: Document
+ * Thrown if the linked session does not exist or is not valid anymore. 
  * 
  * @author selimok
  *

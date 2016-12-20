@@ -19,7 +19,7 @@ package software.sandc.springframework.security.jwt.util;
 import java.util.Iterator;
 
 /**
- * This class is copied from apache commons-lang3 project.
+ * This class is copied from Apache commons-lang3 project and simplified.
  * 
  * <p>
  * Operations on {@link java.lang.String} that are {@code null} safe.
@@ -239,7 +239,6 @@ public class StringUtils {
 	 * @since 2.0
 	 * @since 3.0 Changed signature to use varargs
 	 */
-	@SuppressWarnings("unchecked")
 	public static <T> String join(final T... elements) {
 		return join(elements, null);
 	}
