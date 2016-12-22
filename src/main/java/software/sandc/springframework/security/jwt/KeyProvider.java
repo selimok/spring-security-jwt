@@ -4,8 +4,8 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import software.sandc.springframework.security.jwt.model.KeyType;
 
 /**
- * {@link KeyProvider} is responsible to provide keys used for
- * signing and validating of JWT tokens.
+ * {@link KeyProvider} is responsible to provide keys used for signing and
+ * validating of JWT tokens.
  * 
  * @author selimok
  *

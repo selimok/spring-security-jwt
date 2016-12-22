@@ -8,35 +8,35 @@ import software.sandc.springframework.security.jwt.model.KeyType;
 
 public class FakeKeyProvider implements KeyProvider {
 
-	private final String privateKey;
-	
-	public FakeKeyProvider() {
-		privateKey = UUID.randomUUID().toString();
-	}
+    private final String privateKey;
 
-	@Override
-	public String getCurrentSigningKeyId() {
-		return "1";
-	}
+    public FakeKeyProvider() {
+        privateKey = UUID.randomUUID().toString();
+    }
 
-	@Override
-	public String getPrivateKey(String keyId) {
-		return privateKey;
-	}
+    @Override
+    public String getCurrentSigningKeyId() {
+        return "1";
+    }
 
-	@Override
-	public String getPublicKey(String keyId) {
-		return null;
-	}
+    @Override
+    public String getPrivateKey(String keyId) {
+        return privateKey;
+    }
 
-	@Override
-	public KeyType getKeyType(String keyId) {
-		return KeyType.SYMMETRIC;
-	}
+    @Override
+    public String getPublicKey(String keyId) {
+        return null;
+    }
 
-	@Override
-	public SignatureAlgorithm getSignatureAlgorithm(String keyId) {
-		return SignatureAlgorithm.HS512;
-	}	
+    @Override
+    public KeyType getKeyType(String keyId) {
+        return KeyType.SYMMETRIC;
+    }
+
+    @Override
+    public SignatureAlgorithm getSignatureAlgorithm(String keyId) {
+        return SignatureAlgorithm.HS512;
+    }
 
 }

@@ -33,58 +33,58 @@ public class DefaultJWTRequestResponseHandler implements JWTRequestResponseHandl
 
     @Override
     public TokenContainer getTokenFromRequest(HttpServletRequest request) {
-	String jwtToken = getJWTTokenFromRequest(request);
-	if (jwtToken == null || jwtToken.isEmpty()) {
-	    return null;
-	} else {
-	    String xsrfToken = getXSRFTokenFromHeader(request);
-	    return new TokenContainer(jwtToken, xsrfToken);
-	}
+        String jwtToken = getJWTTokenFromRequest(request);
+        if (jwtToken == null || jwtToken.isEmpty()) {
+            return null;
+        } else {
+            String xsrfToken = getXSRFTokenFromHeader(request);
+            return new TokenContainer(jwtToken, xsrfToken);
+        }
     }
 
     @Override
     public Parameters getParametersFromRequest(HttpServletRequest request) {
-	if (isJWTRequestedInMobileMode(request)) {
-	    return new Parameters(Parameters.KEY_DISABLE_XSRF_PROTECTION, true);
-	}
-	return null;
+        if (isJWTRequestedInMobileMode(request)) {
+            return new Parameters(Parameters.KEY_DISABLE_XSRF_PROTECTION, true);
+        }
+        return null;
     }
 
     @Override
     public void putTokenToResponse(HttpServletRequest request, HttpServletResponse response,
-	    TokenContainer tokenContainer) {
+            TokenContainer tokenContainer) {
 
-	if (isJWTRequestedInMobileMode(request)) {
-	    response.addHeader(jwtResponseHeaderParameter, tokenContainer.getJwtToken());
-	} else {
-	    Cookie jwtTokenCookie = new Cookie(jwtCookieParameter, tokenContainer.getJwtToken());
-	    // Setting JWT token as HttpOnly is really important. JWT Token
-	    // should only be readable by browser and none of java script codes.
-	    // Otherwise token can be breached in case of XSS attacks.
-	    jwtTokenCookie.setHttpOnly(true);
-	    jwtTokenCookie.setSecure(secureCookie);
-	    jwtTokenCookie.setPath(cookiePath);
+        if (isJWTRequestedInMobileMode(request)) {
+            response.addHeader(jwtResponseHeaderParameter, tokenContainer.getJwtToken());
+        } else {
+            Cookie jwtTokenCookie = new Cookie(jwtCookieParameter, tokenContainer.getJwtToken());
+            // Setting JWT token as HttpOnly is really important. JWT Token
+            // should only be readable by browser and none of java script codes.
+            // Otherwise token can be breached in case of XSS attacks.
+            jwtTokenCookie.setHttpOnly(true);
+            jwtTokenCookie.setSecure(secureCookie);
+            jwtTokenCookie.setPath(cookiePath);
 
-	    Cookie xsrfTokenCookie = new Cookie(xsrfCookieParameter, tokenContainer.getXsrfToken());
-	    xsrfTokenCookie.setSecure(secureCookie);
-	    xsrfTokenCookie.setPath(cookiePath);
+            Cookie xsrfTokenCookie = new Cookie(xsrfCookieParameter, tokenContainer.getXsrfToken());
+            xsrfTokenCookie.setSecure(secureCookie);
+            xsrfTokenCookie.setPath(cookiePath);
 
-	    response.addCookie(jwtTokenCookie);
-	    response.addCookie(xsrfTokenCookie);
-	}
+            response.addCookie(jwtTokenCookie);
+            response.addCookie(xsrfTokenCookie);
+        }
 
     }
 
     public void setJwtCookieParameter(String jwtCookieParameter) {
-	this.jwtCookieParameter = jwtCookieParameter;
+        this.jwtCookieParameter = jwtCookieParameter;
     }
 
     public void setJwtRequestHeaderParameter(String jwtRequestHeaderParameter) {
-	this.jwtRequestHeaderParameter = jwtRequestHeaderParameter;
+        this.jwtRequestHeaderParameter = jwtRequestHeaderParameter;
     }
 
     public void setJwtModeRequestHeaderParameter(String jwtModeRequestHeaderParameter) {
-	this.jwtModeRequestHeaderParameter = jwtModeRequestHeaderParameter;
+        this.jwtModeRequestHeaderParameter = jwtModeRequestHeaderParameter;
     }
 
     public void setJwtResponseHeaderParameter(String jwtResponseHeaderParameter) {
@@ -92,51 +92,51 @@ public class DefaultJWTRequestResponseHandler implements JWTRequestResponseHandl
     }
 
     public void setXsrfCookieParameter(String xsrfCookieParameter) {
-	this.xsrfCookieParameter = xsrfCookieParameter;
+        this.xsrfCookieParameter = xsrfCookieParameter;
     }
 
     public void setXsrfRequestHeaderParameter(String xsrfRequestHeaderParameter) {
-	this.xsrfRequestHeaderParameter = xsrfRequestHeaderParameter;
+        this.xsrfRequestHeaderParameter = xsrfRequestHeaderParameter;
     }
 
     public void setCookiePath(String cookiePath) {
-	this.cookiePath = cookiePath;
+        this.cookiePath = cookiePath;
     }
 
     public void setSecureCookie(boolean secureCookie) {
-	this.secureCookie = secureCookie;
+        this.secureCookie = secureCookie;
     }
 
     protected String getJWTTokenFromRequest(HttpServletRequest request) {
-	String jwtToken = null;
-	if(isJWTRequestedInMobileMode(request)){
-	    jwtToken = getJWTTokenFromHeader(request);	    
-	}else{
-	    jwtToken = getJWTTokenFromCookie(request);	    
-	}
-	return jwtToken;
+        String jwtToken = null;
+        if (isJWTRequestedInMobileMode(request)) {
+            jwtToken = getJWTTokenFromHeader(request);
+        } else {
+            jwtToken = getJWTTokenFromCookie(request);
+        }
+        return jwtToken;
 
     }
 
     protected String getJWTTokenFromCookie(HttpServletRequest request) {
-	Cookie cookie = WebUtils.getCookie(request, jwtCookieParameter);
-	if (cookie != null && cookie.getValue() != null) {
-	    return cookie.getValue();
-	} else {
-	    return null;
-	}
+        Cookie cookie = WebUtils.getCookie(request, jwtCookieParameter);
+        if (cookie != null && cookie.getValue() != null) {
+            return cookie.getValue();
+        } else {
+            return null;
+        }
     }
 
     protected String getJWTTokenFromHeader(HttpServletRequest request) {
-	return request.getHeader(jwtRequestHeaderParameter);
+        return request.getHeader(jwtRequestHeaderParameter);
     }
 
     protected String getXSRFTokenFromHeader(HttpServletRequest request) {
-	return request.getHeader(xsrfRequestHeaderParameter);
+        return request.getHeader(xsrfRequestHeaderParameter);
     }
 
     private boolean isJWTRequestedInMobileMode(HttpServletRequest request) {
-	String jwtMode = request.getHeader(jwtModeRequestHeaderParameter);
-	return SPRING_SECURITY_JWT_REQUEST_HEADER_JWT_MODE_VALUE_MOBILE.equals(jwtMode);
+        String jwtMode = request.getHeader(jwtModeRequestHeaderParameter);
+        return SPRING_SECURITY_JWT_REQUEST_HEADER_JWT_MODE_VALUE_MOBILE.equals(jwtMode);
     }
 }

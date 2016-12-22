@@ -32,14 +32,14 @@ public class JWTAuthentication extends AbstractAuthenticationToken {
      *            represented by this authentication object.
      */
     public JWTAuthentication(String principal, Collection<? extends GrantedAuthority> authorities) {
-	super(authorities);
-	this.principal = principal;
-	this.setAuthenticated(true);
+        super(authorities);
+        this.principal = principal;
+        this.setAuthenticated(true);
     }
 
     @Override
     public Object getCredentials() {
-	return null;
+        return null;
     }
 
     /**
@@ -50,7 +50,7 @@ public class JWTAuthentication extends AbstractAuthenticationToken {
      */
     @Override
     public String getPrincipal() {
-	return this.principal;
+        return this.principal;
     }
 
 }

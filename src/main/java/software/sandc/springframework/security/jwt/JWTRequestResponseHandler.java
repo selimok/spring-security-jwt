@@ -56,6 +56,6 @@ public interface JWTRequestResponseHandler {
      * 
      */
     public void putTokenToResponse(HttpServletRequest request, HttpServletResponse response,
-	    TokenContainer tokenContainer);
+            TokenContainer tokenContainer);
 
 }

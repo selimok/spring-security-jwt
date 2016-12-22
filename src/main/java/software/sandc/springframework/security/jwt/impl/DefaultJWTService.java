@@ -70,60 +70,60 @@ public class DefaultJWTService implements JWTService, InitializingBean {
     protected int tokenLifetime = 600;
 
     public DefaultJWTService(UserDetailsService userDetailsService) {
-	this.userDetailsService = userDetailsService;
+        this.userDetailsService = userDetailsService;
     }
 
     public JWTContext authenticateJWTRequest(HttpServletRequest request, HttpServletResponse response) {
-	JWTContext jwtContext = null;
-	try {
-	    TokenContainer tokenContainer = jwtRequestResponseHandler.getTokenFromRequest(request);
-	    if (tokenContainer != null) {
-		try {
-		    Parameters parameters = jwtRequestResponseHandler.getParametersFromRequest(request);
-		    jwtContext = validate(tokenContainer, parameters);
-		} catch (ExpiredTokenException e) {
-		    if (isTokenRenewalEnabled()) {
-			Parameters parameters = jwtRequestResponseHandler.getParametersFromRequest(request);
-			jwtContext = renew(tokenContainer, parameters);
-		    }
-		}
-		handleJWTContext(request, response, jwtContext);
-	    }
-	} catch (AuthenticationException e) {
-	    // TODO: Log but do nothing else.
-	}
-	return jwtContext;
+        JWTContext jwtContext = null;
+        try {
+            TokenContainer tokenContainer = jwtRequestResponseHandler.getTokenFromRequest(request);
+            if (tokenContainer != null) {
+                try {
+                    Parameters parameters = jwtRequestResponseHandler.getParametersFromRequest(request);
+                    jwtContext = validate(tokenContainer, parameters);
+                } catch (ExpiredTokenException e) {
+                    if (isTokenRenewalEnabled()) {
+                        Parameters parameters = jwtRequestResponseHandler.getParametersFromRequest(request);
+                        jwtContext = renew(tokenContainer, parameters);
+                    }
+                }
+                handleJWTContext(request, response, jwtContext);
+            }
+        } catch (AuthenticationException e) {
+            // TODO: Log but do nothing else.
+        }
+        return jwtContext;
     }
 
     public JWTContext authenticateLoginRequest(Credentials credentials, HttpServletRequest request,
-	    HttpServletResponse response) {
-	JWTContext jwtContext = null;
-	String password = credentials.getPassword();
-	String principal = credentials.getPrincipal();
-	if (principal != null && password != null) {
-	    UserDetails userDetails = userDetailsService.loadUserByUsername(principal);
-	    if (password.equals(userDetails.getPassword())) {
-		Parameters parameters = jwtRequestResponseHandler.getParametersFromRequest(request);
-		jwtContext = create(principal, parameters);
-		handleJWTContext(request, response, jwtContext);
-	    }
-	}
-	return jwtContext;
+            HttpServletResponse response) {
+        JWTContext jwtContext = null;
+        String password = credentials.getPassword();
+        String principal = credentials.getPrincipal();
+        if (principal != null && password != null) {
+            UserDetails userDetails = userDetailsService.loadUserByUsername(principal);
+            if (password.equals(userDetails.getPassword())) {
+                Parameters parameters = jwtRequestResponseHandler.getParametersFromRequest(request);
+                jwtContext = create(principal, parameters);
+                handleJWTContext(request, response, jwtContext);
+            }
+        }
+        return jwtContext;
     }
 
     public JWTContext createAndAttach(String principal, HttpServletRequest request, HttpServletResponse response,
-	    Parameters parameters) {
-	JWTContext jwtContext = null;
-	if (principal != null) {
-	    Parameters parametersFromRequest = jwtRequestResponseHandler.getParametersFromRequest(request);
-	    if (parametersFromRequest != null) {
-		parametersFromRequest.merge(parameters);
-		parameters = parametersFromRequest;
-	    }
-	    jwtContext = create(principal, parameters);
-	    handleJWTContext(request, response, jwtContext);
-	}
-	return jwtContext;
+            Parameters parameters) {
+        JWTContext jwtContext = null;
+        if (principal != null) {
+            Parameters parametersFromRequest = jwtRequestResponseHandler.getParametersFromRequest(request);
+            if (parametersFromRequest != null) {
+                parametersFromRequest.merge(parameters);
+                parameters = parametersFromRequest;
+            }
+            jwtContext = create(principal, parameters);
+            handleJWTContext(request, response, jwtContext);
+        }
+        return jwtContext;
     }
 
     /**
@@ -139,159 +139,159 @@ public class DefaultJWTService implements JWTService, InitializingBean {
      *             if the user identified with given principal cannot be found.
      */
     public JWTContext create(String principal, Parameters parameters) throws UserNotFoundException {
-	String keyId = keyProvider.getCurrentSigningKeyId();
-	String signingKey = keyProvider.getPrivateKey(keyId);
-	SignatureAlgorithm signatureAlgorithm = keyProvider.getSignatureAlgorithm(keyId);
-	byte[] binarySigningKey = DatatypeConverter.parseBase64Binary(signingKey);
-	Date now = new Date();
-	Date sessionExpiry = new Date(System.currentTimeMillis() + (tokenLifetime * 1000));
-	String xsrfToken = null;
-	if (!isXSRFProtectionDisabled(parameters)) {
-	    xsrfToken = generateXSRFToken();
-	}
-	UserDetails userDetails = getUserDetails(principal);
-	Collection<? extends GrantedAuthority> authorities = userDetails.getAuthorities();
-	String authoritiesAsString = convertToString(authorities);
+        String keyId = keyProvider.getCurrentSigningKeyId();
+        String signingKey = keyProvider.getPrivateKey(keyId);
+        SignatureAlgorithm signatureAlgorithm = keyProvider.getSignatureAlgorithm(keyId);
+        byte[] binarySigningKey = DatatypeConverter.parseBase64Binary(signingKey);
+        Date now = new Date();
+        Date sessionExpiry = new Date(System.currentTimeMillis() + (tokenLifetime * 1000));
+        String xsrfToken = null;
+        if (!isXSRFProtectionDisabled(parameters)) {
+            xsrfToken = generateXSRFToken();
+        }
+        UserDetails userDetails = getUserDetails(principal);
+        Collection<? extends GrantedAuthority> authorities = userDetails.getAuthorities();
+        String authoritiesAsString = convertToString(authorities);
 
-	Claims claims = Jwts.claims();
-	if (xsrfToken != null) {
-	    claims.put(xsrfParameterName, xsrfToken);
-	}
-	claims.put(authoritiesParameterName, authoritiesAsString);
-	if (sessionProvider != null) {
-	    claims.put(sessionIdParameterName, sessionProvider.createSession(principal));
-	}
+        Claims claims = Jwts.claims();
+        if (xsrfToken != null) {
+            claims.put(xsrfParameterName, xsrfToken);
+        }
+        claims.put(authoritiesParameterName, authoritiesAsString);
+        if (sessionProvider != null) {
+            claims.put(sessionIdParameterName, sessionProvider.createSession(principal));
+        }
 
-	JwtBuilder jwtBuilder = Jwts.builder().setHeaderParam(JwsHeader.KEY_ID, keyId).setClaims(claims)
-		.setSubject(userDetails.getUsername()).setIssuedAt(now).setNotBefore(now).setExpiration(sessionExpiry)
-		.signWith(signatureAlgorithm, binarySigningKey);
-	String jwtToken = jwtBuilder.compact();
+        JwtBuilder jwtBuilder = Jwts.builder().setHeaderParam(JwsHeader.KEY_ID, keyId).setClaims(claims)
+                .setSubject(userDetails.getUsername()).setIssuedAt(now).setNotBefore(now).setExpiration(sessionExpiry)
+                .signWith(signatureAlgorithm, binarySigningKey);
+        String jwtToken = jwtBuilder.compact();
 
-	JWTContext jwtContext = createJWTContext(principal, xsrfToken, authorities, jwtToken);
+        JWTContext jwtContext = createJWTContext(principal, xsrfToken, authorities, jwtToken);
 
-	return jwtContext;
+        return jwtContext;
     }
 
     public JWTContext renew(TokenContainer tokenContainer, Parameters parameters) {
-	if (sessionProvider == null) {
-	    throw new TokenRenewalException("No session provider found for token renewal.");
-	}
+        if (sessionProvider == null) {
+            throw new TokenRenewalException("No session provider found for token renewal.");
+        }
 
-	boolean ignoreExpiry = true;
-	Parameters validationParameters = new Parameters(parameters);
-	validationParameters.put(Parameters.KEY_IGNORE_EXPIRY, ignoreExpiry);
-	validate(tokenContainer, validationParameters);
+        boolean ignoreExpiry = true;
+        Parameters validationParameters = new Parameters(parameters);
+        validationParameters.put(Parameters.KEY_IGNORE_EXPIRY, ignoreExpiry);
+        validate(tokenContainer, validationParameters);
 
-	JwtParser jwtParser = Jwts.parser().setSigningKeyResolver(signingKeyResolver)
-		.setAllowedClockSkewSeconds(TEN_YEARS_IN_SECONDS);
-	String jwtToken = tokenContainer.getJwtToken();
-	Jws<Claims> jws = jwtParser.parseClaimsJws(jwtToken);
-	Claims claims = jws.getBody();
-	String sessionId = extractSessionId(claims);
-	String principal = extractPrincipal(claims);
+        JwtParser jwtParser = Jwts.parser().setSigningKeyResolver(signingKeyResolver)
+                .setAllowedClockSkewSeconds(TEN_YEARS_IN_SECONDS);
+        String jwtToken = tokenContainer.getJwtToken();
+        Jws<Claims> jws = jwtParser.parseClaimsJws(jwtToken);
+        Claims claims = jws.getBody();
+        String sessionId = extractSessionId(claims);
+        String principal = extractPrincipal(claims);
 
-	if (sessionProvider.isSessionValid(sessionId)) {
-	    return create(principal, parameters);
-	} else {
-	    throw new InvalidSessionException("Token session does not exist or not valid anymore.");
-	}
+        if (sessionProvider.isSessionValid(sessionId)) {
+            return create(principal, parameters);
+        } else {
+            throw new InvalidSessionException("Token session does not exist or not valid anymore.");
+        }
     }
 
     public JWTContext validate(TokenContainer tokenContainer, Parameters parameters)
-	    throws InvalidTokenException, ExpiredTokenException {
-	if (tokenContainer == null) {
-	    throw new InvalidTokenException("Token container is empty");
-	}
-	JwtParser jwtParser = Jwts.parser().setSigningKeyResolver(signingKeyResolver);
-	if (parameters != null && parameters.isTrue(Parameters.KEY_IGNORE_EXPIRY)) {
-	    jwtParser = jwtParser.setAllowedClockSkewSeconds(TEN_YEARS_IN_SECONDS);
-	}
-	String jwtToken = tokenContainer.getJwtToken();
-	try {
-	    Jws<Claims> jws = jwtParser.parseClaimsJws(jwtToken);
-	    Claims claims = jws.getBody();
-	    String xsrfToken = tokenContainer.getXsrfToken();
-	    validateXSRF(claims, xsrfToken);
-	    String principal = extractPrincipal(claims);
-	    Collection<GrantedAuthority> authorities = getAuthorities(claims);
-	    JWTContext jwtContext = createJWTContext(principal, xsrfToken, authorities, jwtToken);
-	    return jwtContext;
-	} catch (ExpiredJwtException e) {
-	    throw new ExpiredTokenException("JWT Token is expired.");
-	} catch (JwtException e) {
-	    throw new InvalidTokenException("JWT Token is invalid.", e);
-	}
+            throws InvalidTokenException, ExpiredTokenException {
+        if (tokenContainer == null) {
+            throw new InvalidTokenException("Token container is empty");
+        }
+        JwtParser jwtParser = Jwts.parser().setSigningKeyResolver(signingKeyResolver);
+        if (parameters != null && parameters.isTrue(Parameters.KEY_IGNORE_EXPIRY)) {
+            jwtParser = jwtParser.setAllowedClockSkewSeconds(TEN_YEARS_IN_SECONDS);
+        }
+        String jwtToken = tokenContainer.getJwtToken();
+        try {
+            Jws<Claims> jws = jwtParser.parseClaimsJws(jwtToken);
+            Claims claims = jws.getBody();
+            String xsrfToken = tokenContainer.getXsrfToken();
+            validateXSRF(claims, xsrfToken);
+            String principal = extractPrincipal(claims);
+            Collection<GrantedAuthority> authorities = getAuthorities(claims);
+            JWTContext jwtContext = createJWTContext(principal, xsrfToken, authorities, jwtToken);
+            return jwtContext;
+        } catch (ExpiredJwtException e) {
+            throw new ExpiredTokenException("JWT Token is expired.");
+        } catch (JwtException e) {
+            throw new InvalidTokenException("JWT Token is invalid.", e);
+        }
     }
 
     @Override
     public void afterPropertiesSet() throws Exception {
 
-	Assert.notNull(this.userDetailsService, "userDetailsService must be specified");
+        Assert.notNull(this.userDetailsService, "userDetailsService must be specified");
 
-	if (jwtRequestResponseHandler == null) {
-	    jwtRequestResponseHandler = new DefaultJWTRequestResponseHandler();
-	}
+        if (jwtRequestResponseHandler == null) {
+            jwtRequestResponseHandler = new DefaultJWTRequestResponseHandler();
+        }
 
-	if (keyProvider == null) {
-	    keyProvider = new FakeKeyProvider();
-	}
+        if (keyProvider == null) {
+            keyProvider = new FakeKeyProvider();
+        }
 
-	if (signingKeyResolver == null) {
-	    signingKeyResolver = new DefaultSigningKeyResolver(keyProvider);
-	}
+        if (signingKeyResolver == null) {
+            signingKeyResolver = new DefaultSigningKeyResolver(keyProvider);
+        }
 
-	if (sessionProvider == null) {
-	    sessionProvider = new FakeSessionProvider();
-	}
+        if (sessionProvider == null) {
+            sessionProvider = new FakeSessionProvider();
+        }
 
-	if (userDetailsChecker == null) {
-	    userDetailsChecker = new AccountStatusUserDetailsChecker();
-	}
+        if (userDetailsChecker == null) {
+            userDetailsChecker = new AccountStatusUserDetailsChecker();
+        }
 
     }
 
     public boolean isTokenRenewalEnabled() {
-	return sessionProvider != null;
+        return sessionProvider != null;
     }
 
     public void setSigningKeyResolver(SigningKeyResolver signingKeyResolver) {
-	this.signingKeyResolver = signingKeyResolver;
+        this.signingKeyResolver = signingKeyResolver;
     }
 
     public void setKeyProvider(KeyProvider keyProvider) {
-	this.keyProvider = keyProvider;
+        this.keyProvider = keyProvider;
     }
 
     public UserDetailsService getUserDetailsService() {
-	return this.userDetailsService;
+        return this.userDetailsService;
     }
 
     public void setUserDetailsService(UserDetailsService userDetailsService) {
-	this.userDetailsService = userDetailsService;
+        this.userDetailsService = userDetailsService;
     }
 
     public void setJwtRequestResponseHandler(JWTRequestResponseHandler jwtRequestResponseHandler) {
-	this.jwtRequestResponseHandler = jwtRequestResponseHandler;
+        this.jwtRequestResponseHandler = jwtRequestResponseHandler;
     }
 
     public JWTRequestResponseHandler getJwtRequestResponseHandler() {
-	return this.jwtRequestResponseHandler;
+        return this.jwtRequestResponseHandler;
     }
 
     public void setSessionProvider(SessionProvider sessionProvider) {
-	this.sessionProvider = sessionProvider;
+        this.sessionProvider = sessionProvider;
     }
 
     public void setAuthoritiesParameterName(String authoritiesParameterName) {
-	this.authoritiesParameterName = authoritiesParameterName;
+        this.authoritiesParameterName = authoritiesParameterName;
     }
 
     public void setSessionIdParameterName(String sessionIdParameterName) {
-	this.sessionIdParameterName = sessionIdParameterName;
+        this.sessionIdParameterName = sessionIdParameterName;
     }
 
     public void setXsrfParameterName(String xsrfParameterName) {
-	this.xsrfParameterName = xsrfParameterName;
+        this.xsrfParameterName = xsrfParameterName;
     }
 
     /**
@@ -302,8 +302,8 @@ public class DefaultJWTService implements JWTService, InitializingBean {
      *            An instance of user details checker implementation.
      */
     public void setUserDetailsChecker(UserDetailsChecker userDetailsChecker) {
-	Assert.notNull(userDetailsChecker, "userDetailsChacker cannot be null");
-	this.userDetailsChecker = userDetailsChecker;
+        Assert.notNull(userDetailsChecker, "userDetailsChacker cannot be null");
+        this.userDetailsChecker = userDetailsChecker;
     }
 
     /**
@@ -313,93 +313,93 @@ public class DefaultJWTService implements JWTService, InitializingBean {
      *            Token lifetime in seconds.
      */
     public void setTokenLifetime(int tokenLifetime) {
-	this.tokenLifetime = tokenLifetime;
+        this.tokenLifetime = tokenLifetime;
     }
 
     protected String extractPrincipal(Claims claims) {
-	String principal = claims.getSubject();
+        String principal = claims.getSubject();
 
-	if (principal == null || principal.isEmpty()) {
-	    throw new InvalidTokenException("A valid token must provide a non-empty principal value.");
-	}
+        if (principal == null || principal.isEmpty()) {
+            throw new InvalidTokenException("A valid token must provide a non-empty principal value.");
+        }
 
-	return principal;
+        return principal;
     }
 
     protected String extractSessionId(Claims claims) {
-	String sessionId = claims.get(sessionIdParameterName, String.class);
-	return sessionId;
+        String sessionId = claims.get(sessionIdParameterName, String.class);
+        return sessionId;
     }
 
     protected JWTContext createJWTContext(String principal, String xsrfToken,
-	    Collection<? extends GrantedAuthority> authorities, String jwtToken) {
-	TokenContainer tokenContainer = new TokenContainer(jwtToken, xsrfToken);
-	JWTAuthentication authentication = new JWTAuthentication(principal, authorities);
-	JWTContext jwtContext = new JWTContext(authentication, tokenContainer);
-	return jwtContext;
+            Collection<? extends GrantedAuthority> authorities, String jwtToken) {
+        TokenContainer tokenContainer = new TokenContainer(jwtToken, xsrfToken);
+        JWTAuthentication authentication = new JWTAuthentication(principal, authorities);
+        JWTContext jwtContext = new JWTContext(authentication, tokenContainer);
+        return jwtContext;
     }
 
     protected String generateXSRFToken() {
-	return UUID.randomUUID().toString();
+        return UUID.randomUUID().toString();
     }
 
     protected void validateXSRF(Claims claims, String xsrfToken) {
-	String xsrfTokenFromClaim = claims.get(xsrfParameterName, String.class);
-	if (xsrfTokenFromClaim != null && !xsrfTokenFromClaim.equals(xsrfToken)) {
-	    throw new InsufficientAuthenticationException("XSRF Token is not valid.");
-	}
+        String xsrfTokenFromClaim = claims.get(xsrfParameterName, String.class);
+        if (xsrfTokenFromClaim != null && !xsrfTokenFromClaim.equals(xsrfToken)) {
+            throw new InsufficientAuthenticationException("XSRF Token is not valid.");
+        }
     }
 
     protected String convertToString(Collection<? extends GrantedAuthority> authorities) {
-	List<String> authoriesAsStringList = getAuthorityListAsString(authorities);
-	String authoritiesAsString = StringUtils.join(authoriesAsStringList, ",");
-	return authoritiesAsString;
+        List<String> authoriesAsStringList = getAuthorityListAsString(authorities);
+        String authoritiesAsString = StringUtils.join(authoriesAsStringList, ",");
+        return authoritiesAsString;
     }
 
     protected UserDetails getUserDetails(String principal) {
-	try {
-	    UserDetails user = userDetailsService.loadUserByUsername(principal);
-	    userDetailsChecker.check(user);
-	    return user;
-	} catch (UsernameNotFoundException e) {
-	    throw new UserNotFoundException("User with principal: " + principal + " cannot be found.", e);
-	}
+        try {
+            UserDetails user = userDetailsService.loadUserByUsername(principal);
+            userDetailsChecker.check(user);
+            return user;
+        } catch (UsernameNotFoundException e) {
+            throw new UserNotFoundException("User with principal: " + principal + " cannot be found.", e);
+        }
     }
 
     protected List<String> getAuthorityListAsString(Collection<? extends GrantedAuthority> authorities) {
-	List<String> authoritiesAsString = new ArrayList<String>();
-	if (authorities != null) {
-	    for (GrantedAuthority authority : authorities) {
-		authoritiesAsString.add(authority.getAuthority());
-	    }
-	}
-	return authoritiesAsString;
+        List<String> authoritiesAsString = new ArrayList<String>();
+        if (authorities != null) {
+            for (GrantedAuthority authority : authorities) {
+                authoritiesAsString.add(authority.getAuthority());
+            }
+        }
+        return authoritiesAsString;
     }
 
     private boolean isXSRFProtectionDisabled(Parameters parameters) {
-	return parameters != null && parameters.isTrue(Parameters.KEY_DISABLE_XSRF_PROTECTION);
+        return parameters != null && parameters.isTrue(Parameters.KEY_DISABLE_XSRF_PROTECTION);
     }
 
     private void handleJWTContext(HttpServletRequest request, HttpServletResponse response, JWTContext jwtContext) {
-	if (jwtContext != null && jwtContext.isAuthenticated()) {
-	    JWTAuthentication authentication = jwtContext.getAuthentication();
-	    SecurityContextHolder.getContext().setAuthentication(authentication);
-	    jwtRequestResponseHandler.putTokenToResponse(request, response, jwtContext.getTokenContainer());
-	}
+        if (jwtContext != null && jwtContext.isAuthenticated()) {
+            JWTAuthentication authentication = jwtContext.getAuthentication();
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            jwtRequestResponseHandler.putTokenToResponse(request, response, jwtContext.getTokenContainer());
+        }
     }
 
     private Collection<GrantedAuthority> getAuthorities(Claims claims) {
-	String authoritiesAsString = claims.get(authoritiesParameterName, String.class);
-	if (authoritiesAsString == null || authoritiesAsString.isEmpty()) {
-	    return null;
-	} else {
-	    List<String> authoritiesStringList = Arrays.asList(authoritiesAsString.split(","));
-	    List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
-	    for (String authority : authoritiesStringList) {
-		authorities.add(new SimpleGrantedAuthority(authority));
-	    }
-	    return authorities;
-	}
+        String authoritiesAsString = claims.get(authoritiesParameterName, String.class);
+        if (authoritiesAsString == null || authoritiesAsString.isEmpty()) {
+            return null;
+        } else {
+            List<String> authoritiesStringList = Arrays.asList(authoritiesAsString.split(","));
+            List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
+            for (String authority : authoritiesStringList) {
+                authorities.add(new SimpleGrantedAuthority(authority));
+            }
+            return authorities;
+        }
     }
 
 }

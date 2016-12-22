@@ -52,9 +52,10 @@ public interface SessionProvider {
     public boolean isSessionValid(String sessionId);
 
     /**
-     * Revokes given session (referenced by session id). 
+     * Revokes given session (referenced by session id).
      * 
-     * @param sessionId Unique session id.
+     * @param sessionId
+     *            Unique session id.
      */
     public void invalidateSession(String sessionId);
 

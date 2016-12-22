@@ -56,7 +56,7 @@ public interface JWTService {
      * @return A fully fledged {@link JWTContext} object.
      */
     public JWTContext authenticateLoginRequest(Credentials credentials, HttpServletRequest request,
-	    HttpServletResponse response);
+            HttpServletResponse response);
 
     /**
      * Create a fully fledged {@link JWTContext} for given principal and attach
@@ -81,7 +81,7 @@ public interface JWTService {
      * @return A fully fledged {@link JWTContext} object.
      */
     public JWTContext createAndAttach(String principal, HttpServletRequest request, HttpServletResponse response,
-	    Parameters parameters);
+            Parameters parameters);
 
     /**
      * Create a fully fledged {@link JWTContext} for given principal.
@@ -123,7 +123,7 @@ public interface JWTService {
      *            Additional parameters to customize processing of the request.
      *            Possible parameters and their effects may differ depending on
      *            specific implementation. The parameters may be empty or null.
-     *            
+     * 
      * @return A fully fledged {@link JWTContext} object.
      * @throws InvalidTokenException
      *             if the token is not valid or its integrity is not ensured.
@@ -131,6 +131,6 @@ public interface JWTService {
      *             if the token is expired.
      */
     public JWTContext validate(TokenContainer tokenContainer, Parameters parameters)
-	    throws InvalidTokenException, ExpiredTokenException;
+            throws InvalidTokenException, ExpiredTokenException;
 
 }

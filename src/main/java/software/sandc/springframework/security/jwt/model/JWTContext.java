@@ -27,8 +27,8 @@ public class JWTContext {
      *            {@link TokenContainer} instance
      */
     public JWTContext(JWTAuthentication authentication, TokenContainer tokenContainer) {
-	this.authentication = authentication;
-	this.tokenContainer = tokenContainer;
+        this.authentication = authentication;
+        this.tokenContainer = tokenContainer;
     }
 
     /**
@@ -37,7 +37,7 @@ public class JWTContext {
      * @return {@link JWTAuthentication} instance.
      */
     public JWTAuthentication getAuthentication() {
-	return authentication;
+        return authentication;
     }
 
     /**
@@ -47,7 +47,7 @@ public class JWTContext {
      *            {@link JWTAuthentication} instance.
      */
     public void setAuthentication(JWTAuthentication authentication) {
-	this.authentication = authentication;
+        this.authentication = authentication;
     }
 
     /**
@@ -56,7 +56,7 @@ public class JWTContext {
      * @return {@link TokenContainer} instance.
      */
     public TokenContainer getTokenContainer() {
-	return tokenContainer;
+        return tokenContainer;
     }
 
     /**
@@ -66,7 +66,7 @@ public class JWTContext {
      *            {@link TokenContainer} instance.
      */
     public void setTokenContainer(TokenContainer tokenContainer) {
-	this.tokenContainer = tokenContainer;
+        this.tokenContainer = tokenContainer;
     }
 
     /**
@@ -77,43 +77,43 @@ public class JWTContext {
      *         is authenticated.
      */
     public boolean isAuthenticated() {
-	return authentication != null && authentication.isAuthenticated();
+        return authentication != null && authentication.isAuthenticated();
     }
 
     @Override
     public int hashCode() {
-	final int prime = 31;
-	int result = 1;
-	result = prime * result + ((authentication == null) ? 0 : authentication.hashCode());
-	result = prime * result + ((tokenContainer == null) ? 0 : tokenContainer.hashCode());
-	return result;
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((authentication == null) ? 0 : authentication.hashCode());
+        result = prime * result + ((tokenContainer == null) ? 0 : tokenContainer.hashCode());
+        return result;
     }
 
     @Override
     public boolean equals(Object obj) {
-	if (this == obj)
-	    return true;
-	if (obj == null)
-	    return false;
-	if (getClass() != obj.getClass())
-	    return false;
-	JWTContext other = (JWTContext) obj;
-	if (authentication == null) {
-	    if (other.authentication != null)
-		return false;
-	} else if (!authentication.equals(other.authentication))
-	    return false;
-	if (tokenContainer == null) {
-	    if (other.tokenContainer != null)
-		return false;
-	} else if (!tokenContainer.equals(other.tokenContainer))
-	    return false;
-	return true;
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        JWTContext other = (JWTContext) obj;
+        if (authentication == null) {
+            if (other.authentication != null)
+                return false;
+        } else if (!authentication.equals(other.authentication))
+            return false;
+        if (tokenContainer == null) {
+            if (other.tokenContainer != null)
+                return false;
+        } else if (!tokenContainer.equals(other.tokenContainer))
+            return false;
+        return true;
     }
 
     @Override
     public String toString() {
-	return "JWTContext [authentication=" + authentication + ", tokenContainer=" + tokenContainer + "]";
+        return "JWTContext [authentication=" + authentication + ", tokenContainer=" + tokenContainer + "]";
     }
 
 }

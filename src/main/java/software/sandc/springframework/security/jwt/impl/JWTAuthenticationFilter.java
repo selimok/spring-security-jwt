@@ -17,44 +17,44 @@ import software.sandc.springframework.security.jwt.model.JWTContext;
 
 public class JWTAuthenticationFilter extends OncePerRequestFilter {
 
-	protected final JWTService jwtService;
+    protected final JWTService jwtService;
 
-	public JWTAuthenticationFilter(JWTService jwtService) {
-		this.jwtService = jwtService;
-	}
+    public JWTAuthenticationFilter(JWTService jwtService) {
+        this.jwtService = jwtService;
+    }
 
-	@Override
-	public void afterPropertiesSet() throws ServletException {
-		super.afterPropertiesSet();
-		Assert.notNull(this.jwtService, "jwtService must be specified");
-	}
+    @Override
+    public void afterPropertiesSet() throws ServletException {
+        super.afterPropertiesSet();
+        Assert.notNull(this.jwtService, "jwtService must be specified");
+    }
 
-	@Override
-	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-			throws ServletException, IOException {
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
 
-		try {
-			attemptAuthentication(request, response);
-		} catch (AuthenticationException authenticationException) {
-			handleAuthenticationException(request, response, filterChain);
-		}
+        try {
+            attemptAuthentication(request, response);
+        } catch (AuthenticationException authenticationException) {
+            handleAuthenticationException(request, response, filterChain);
+        }
 
-		filterChain.doFilter(request, response);
-	}
+        filterChain.doFilter(request, response);
+    }
 
-	protected Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
-			throws AuthenticationException {
-		Authentication authentication = null;
-		JWTContext jwtContext = jwtService.authenticateJWTRequest(request, response);
-		if(jwtContext != null){
-			authentication = jwtContext.getAuthentication(); 
-		}
-		return authentication;
-	}
+    protected Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
+            throws AuthenticationException {
+        Authentication authentication = null;
+        JWTContext jwtContext = jwtService.authenticateJWTRequest(request, response);
+        if (jwtContext != null) {
+            authentication = jwtContext.getAuthentication();
+        }
+        return authentication;
+    }
 
-	protected void handleAuthenticationException(HttpServletRequest request, HttpServletResponse response,
-			FilterChain filterChain) throws IOException, ServletException {
-		// Do nothing
-	}
+    protected void handleAuthenticationException(HttpServletRequest request, HttpServletResponse response,
+            FilterChain filterChain) throws IOException, ServletException {
+        // Do nothing
+    }
 
 }

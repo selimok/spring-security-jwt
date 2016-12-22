@@ -19,7 +19,7 @@ public class Credentials {
      * @return Principal as String.
      */
     public String getPrincipal() {
-	return principal;
+        return principal;
     }
 
     /**
@@ -30,7 +30,7 @@ public class Credentials {
      *            Principal as String.
      */
     public void setPrincipal(String principal) {
-	this.principal = principal;
+        this.principal = principal;
     }
 
     /**
@@ -39,51 +39,53 @@ public class Credentials {
      * @return Passwort in clear text.
      */
     public String getPassword() {
-	return password;
+        return password;
     }
 
     /**
      * Set password in clear text.
-     * @param password Passwort in clear text.
+     * 
+     * @param password
+     *            Passwort in clear text.
      */
     public void setPassword(String password) {
-	this.password = password;
+        this.password = password;
     }
 
     @Override
     public int hashCode() {
-	final int prime = 31;
-	int result = 1;
-	result = prime * result + ((password == null) ? 0 : password.hashCode());
-	result = prime * result + ((principal == null) ? 0 : principal.hashCode());
-	return result;
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((password == null) ? 0 : password.hashCode());
+        result = prime * result + ((principal == null) ? 0 : principal.hashCode());
+        return result;
     }
 
     @Override
     public boolean equals(Object obj) {
-	if (this == obj)
-	    return true;
-	if (obj == null)
-	    return false;
-	if (getClass() != obj.getClass())
-	    return false;
-	Credentials other = (Credentials) obj;
-	if (password == null) {
-	    if (other.password != null)
-		return false;
-	} else if (!password.equals(other.password))
-	    return false;
-	if (principal == null) {
-	    if (other.principal != null)
-		return false;
-	} else if (!principal.equals(other.principal))
-	    return false;
-	return true;
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        Credentials other = (Credentials) obj;
+        if (password == null) {
+            if (other.password != null)
+                return false;
+        } else if (!password.equals(other.password))
+            return false;
+        if (principal == null) {
+            if (other.principal != null)
+                return false;
+        } else if (!principal.equals(other.principal))
+            return false;
+        return true;
     }
 
     @Override
     public String toString() {
-	return "Credentials [principal=" + principal + ", password=[PROTECTED]]";
+        return "Credentials [principal=" + principal + ", password=[PROTECTED]]";
     }
 
 }

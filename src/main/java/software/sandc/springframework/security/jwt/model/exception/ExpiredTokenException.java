@@ -19,7 +19,7 @@ public class ExpiredTokenException extends AuthenticationException {
      *            the detail message
      */
     public ExpiredTokenException(String msg) {
-	super(msg);
+        super(msg);
     }
 
     /**
@@ -32,7 +32,7 @@ public class ExpiredTokenException extends AuthenticationException {
      *            root cause
      */
     public ExpiredTokenException(String msg, Throwable t) {
-	super(msg, t);
+        super(msg, t);
     }
 
 }
