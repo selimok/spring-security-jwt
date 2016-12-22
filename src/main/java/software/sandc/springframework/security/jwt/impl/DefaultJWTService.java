@@ -41,16 +41,18 @@ import software.sandc.springframework.security.jwt.SessionProvider;
 import software.sandc.springframework.security.jwt.model.Credentials;
 import software.sandc.springframework.security.jwt.model.JWTAuthentication;
 import software.sandc.springframework.security.jwt.model.JWTContext;
+import software.sandc.springframework.security.jwt.model.Parameters;
 import software.sandc.springframework.security.jwt.model.TokenContainer;
 import software.sandc.springframework.security.jwt.model.exception.ExpiredTokenException;
 import software.sandc.springframework.security.jwt.model.exception.InvalidSessionException;
 import software.sandc.springframework.security.jwt.model.exception.InvalidTokenException;
 import software.sandc.springframework.security.jwt.model.exception.TokenRenewalException;
+import software.sandc.springframework.security.jwt.model.exception.UserNotFoundException;
 import software.sandc.springframework.security.jwt.util.StringUtils;
 
 public class DefaultJWTService implements JWTService, InitializingBean {
-
     private static final Integer TEN_YEARS_IN_SECONDS = 315360000;
+
     public static final String SPRING_SECURITY_JWT_KEY_ID_PARAMETER_NAME = "kid";
     public static final String SPRING_SECURITY_JWT_SESSION_ID_PARAMETER_NAME = "jti";
     public static final String SPRING_SECURITY_JWT_XSRF_PARAMETER_NAME = "xsrf-token";
@@ -77,10 +79,12 @@ public class DefaultJWTService implements JWTService, InitializingBean {
 	    TokenContainer tokenContainer = jwtRequestResponseHandler.getTokenFromRequest(request);
 	    if (tokenContainer != null) {
 		try {
-		    jwtContext = validate(tokenContainer);
+		    Parameters parameters = jwtRequestResponseHandler.getParametersFromRequest(request);
+		    jwtContext = validate(tokenContainer, parameters);
 		} catch (ExpiredTokenException e) {
 		    if (isTokenRenewalEnabled()) {
-			jwtContext = renew(tokenContainer);
+			Parameters parameters = jwtRequestResponseHandler.getParametersFromRequest(request);
+			jwtContext = renew(tokenContainer, parameters);
 		    }
 		}
 		handleJWTContext(request, response, jwtContext);
@@ -99,17 +103,19 @@ public class DefaultJWTService implements JWTService, InitializingBean {
 	if (principal != null && password != null) {
 	    UserDetails userDetails = userDetailsService.loadUserByUsername(principal);
 	    if (password.equals(userDetails.getPassword())) {
-		jwtContext = create(principal);
+		Parameters parameters = jwtRequestResponseHandler.getParametersFromRequest(request);
+		jwtContext = create(principal, parameters);
 		handleJWTContext(request, response, jwtContext);
 	    }
 	}
 	return jwtContext;
     }
 
-    public JWTContext createAndAttach(String principal, HttpServletRequest request, HttpServletResponse response) {
+    public JWTContext createAndAttach(String principal, HttpServletRequest request, HttpServletResponse response,
+	    Parameters parameters) {
 	JWTContext jwtContext = null;
 	if (principal != null) {
-	    jwtContext = create(principal);
+	    jwtContext = create(principal, parameters);
 	    handleJWTContext(request, response, jwtContext);
 	}
 	return jwtContext;
@@ -124,21 +130,28 @@ public class DefaultJWTService implements JWTService, InitializingBean {
      *            Unique user identifier. This can be the user name or user id
      *            according to underlying implementation.
      * @return Fully fledged {@link JWTContext} object.
+     * @throws UserNotFoundException
+     *             if the user identified with given principal cannot be found.
      */
-    public JWTContext create(String principal) {
+    public JWTContext create(String principal, Parameters parameters) throws UserNotFoundException {
 	String keyId = keyProvider.getCurrentSigningKeyId();
 	String signingKey = keyProvider.getPrivateKey(keyId);
 	SignatureAlgorithm signatureAlgorithm = keyProvider.getSignatureAlgorithm(keyId);
 	byte[] binarySigningKey = DatatypeConverter.parseBase64Binary(signingKey);
 	Date now = new Date();
 	Date sessionExpiry = new Date(System.currentTimeMillis() + (tokenLifetime * 1000));
-	String xsrfToken = generateXSRFToken();
+	String xsrfToken = null;
+	if (!isXSRFProtectionDisabled(parameters)) {
+	    xsrfToken = generateXSRFToken();
+	}
 	UserDetails userDetails = getUserDetails(principal);
 	Collection<? extends GrantedAuthority> authorities = userDetails.getAuthorities();
 	String authoritiesAsString = convertToString(authorities);
 
 	Claims claims = Jwts.claims();
-	claims.put(xsrfParameterName, xsrfToken);
+	if (xsrfToken != null) {
+	    claims.put(xsrfParameterName, xsrfToken);
+	}
 	claims.put(authoritiesParameterName, authoritiesAsString);
 	if (sessionProvider != null) {
 	    claims.put(sessionIdParameterName, sessionProvider.createSession(principal));
@@ -154,40 +167,38 @@ public class DefaultJWTService implements JWTService, InitializingBean {
 	return jwtContext;
     }
 
-    public JWTContext renew(TokenContainer tokenContainer) {
+    public JWTContext renew(TokenContainer tokenContainer, Parameters parameters) {
 	if (sessionProvider == null) {
 	    throw new TokenRenewalException("No session provider found for token renewal.");
 	}
 
 	boolean ignoreExpiry = true;
-	validate(tokenContainer, ignoreExpiry);
+	Parameters validationParameters = new Parameters(parameters);
+	validationParameters.put(Parameters.KEY_IGNORE_EXPIRY, ignoreExpiry);
+	validate(tokenContainer, validationParameters);
 
 	JwtParser jwtParser = Jwts.parser().setSigningKeyResolver(signingKeyResolver)
 		.setAllowedClockSkewSeconds(TEN_YEARS_IN_SECONDS);
 	String jwtToken = tokenContainer.getJwtToken();
 	Jws<Claims> jws = jwtParser.parseClaimsJws(jwtToken);
 	Claims claims = jws.getBody();
-	String sessionId = getSessionId(claims);
-	String principal = getPrincipal(claims);
+	String sessionId = extractSessionId(claims);
+	String principal = extractPrincipal(claims);
 
 	if (sessionProvider.isSessionValid(sessionId)) {
-	    return create(principal);
+	    return create(principal, parameters);
 	} else {
 	    throw new InvalidSessionException("Token session does not exist or not valid anymore.");
 	}
     }
 
-    public JWTContext validate(TokenContainer tokenContainer) throws InvalidTokenException, ExpiredTokenException {
-	return validate(tokenContainer, false);
-    }
-
-    public JWTContext validate(TokenContainer tokenContainer, boolean ignoreExpiry)
+    public JWTContext validate(TokenContainer tokenContainer, Parameters parameters)
 	    throws InvalidTokenException, ExpiredTokenException {
 	if (tokenContainer == null) {
 	    throw new InvalidTokenException("Token container is empty");
 	}
 	JwtParser jwtParser = Jwts.parser().setSigningKeyResolver(signingKeyResolver);
-	if (ignoreExpiry) {
+	if (parameters != null && parameters.isTrue(Parameters.KEY_IGNORE_EXPIRY)) {
 	    jwtParser = jwtParser.setAllowedClockSkewSeconds(TEN_YEARS_IN_SECONDS);
 	}
 	String jwtToken = tokenContainer.getJwtToken();
@@ -196,7 +207,7 @@ public class DefaultJWTService implements JWTService, InitializingBean {
 	    Claims claims = jws.getBody();
 	    String xsrfToken = tokenContainer.getXsrfToken();
 	    validateXSRF(claims, xsrfToken);
-	    String principal = getPrincipal(claims);
+	    String principal = extractPrincipal(claims);
 	    Collection<GrantedAuthority> authorities = getAuthorities(claims);
 	    JWTContext jwtContext = createJWTContext(principal, xsrfToken, authorities, jwtToken);
 	    return jwtContext;
@@ -205,47 +216,6 @@ public class DefaultJWTService implements JWTService, InitializingBean {
 	} catch (JwtException e) {
 	    throw new InvalidTokenException("JWT Token is invalid.", e);
 	}
-    }
-
-    protected String getPrincipal(Claims claims) {
-	String principal = claims.getSubject();
-
-	if (principal == null || principal.isEmpty()) {
-	    throw new InvalidTokenException("A valid token must provide a non-empty principal value.");
-	}
-
-	return principal;
-    }
-
-    protected String getSessionId(Claims claims) {
-	String sessionId = claims.get(sessionIdParameterName, String.class);
-	return sessionId;
-    }
-
-    private void handleJWTContext(HttpServletRequest request, HttpServletResponse response, JWTContext jwtContext) {
-	if (jwtContext != null && jwtContext.isAuthenticated()) {
-	    JWTAuthentication authentication = jwtContext.getAuthentication();
-	    SecurityContextHolder.getContext().setAuthentication(authentication);
-	    jwtRequestResponseHandler.putTokenToResponse(request, response, jwtContext.getTokenContainer());
-	}
-    }
-
-    private Collection<GrantedAuthority> getAuthorities(Claims claims) {
-	String authoritiesAsString = claims.get(authoritiesParameterName, String.class);
-	if (authoritiesAsString == null || authoritiesAsString.isEmpty()) {
-	    return null;
-	} else {
-	    List<String> authoritiesStringList = Arrays.asList(authoritiesAsString.split(","));
-	    List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
-	    for (String authority : authoritiesStringList) {
-		authorities.add(new SimpleGrantedAuthority(authority));
-	    }
-	    return authorities;
-	}
-    }
-
-    public boolean isTokenRenewalEnabled() {
-	return sessionProvider != null;
     }
 
     @Override
@@ -273,6 +243,10 @@ public class DefaultJWTService implements JWTService, InitializingBean {
 	    userDetailsChecker = new AccountStatusUserDetailsChecker();
 	}
 
+    }
+
+    public boolean isTokenRenewalEnabled() {
+	return sessionProvider != null;
     }
 
     public void setSigningKeyResolver(SigningKeyResolver signingKeyResolver) {
@@ -328,13 +302,28 @@ public class DefaultJWTService implements JWTService, InitializingBean {
     }
 
     /**
-     * Set token lifetime in seconds. 
+     * Set token lifetime in seconds.
      * 
      * @param tokenLifetime
      *            Token lifetime in seconds.
      */
     public void setTokenLifetime(int tokenLifetime) {
 	this.tokenLifetime = tokenLifetime;
+    }
+
+    protected String extractPrincipal(Claims claims) {
+	String principal = claims.getSubject();
+
+	if (principal == null || principal.isEmpty()) {
+	    throw new InvalidTokenException("A valid token must provide a non-empty principal value.");
+	}
+
+	return principal;
+    }
+
+    protected String extractSessionId(Claims claims) {
+	String sessionId = claims.get(sessionIdParameterName, String.class);
+	return sessionId;
     }
 
     protected JWTContext createJWTContext(String principal, String xsrfToken,
@@ -351,28 +340,25 @@ public class DefaultJWTService implements JWTService, InitializingBean {
 
     protected void validateXSRF(Claims claims, String xsrfToken) {
 	String xsrfTokenFromClaim = claims.get(xsrfParameterName, String.class);
-
-	if (StringUtils.isBlank(xsrfToken) || StringUtils.isBlank(xsrfTokenFromClaim)
-		|| !xsrfToken.equals(xsrfTokenFromClaim)) {
+	if (xsrfTokenFromClaim != null && !xsrfTokenFromClaim.equals(xsrfToken)) {
 	    throw new InsufficientAuthenticationException("XSRF Token is not valid.");
 	}
     }
 
     protected String convertToString(Collection<? extends GrantedAuthority> authorities) {
 	List<String> authoriesAsStringList = getAuthorityListAsString(authorities);
-	String authoritiesAsString = StringUtils.join(authoriesAsStringList, ',');
+	String authoritiesAsString = StringUtils.join(authoriesAsStringList, ",");
 	return authoritiesAsString;
     }
 
     protected UserDetails getUserDetails(String principal) {
-	UserDetails user = userDetailsService.loadUserByUsername(principal);
-
-	if (user == null) {
-	    throw new UsernameNotFoundException(String.format("User with principal: %s cannot be found.", principal));
+	try {
+	    UserDetails user = userDetailsService.loadUserByUsername(principal);
+	    userDetailsChecker.check(user);
+	    return user;
+	} catch (UsernameNotFoundException e) {
+	    throw new UserNotFoundException("User with principal: " + principal + " cannot be found.", e);
 	}
-
-	userDetailsChecker.check(user);
-	return user;
     }
 
     protected List<String> getAuthorityListAsString(Collection<? extends GrantedAuthority> authorities) {
@@ -383,6 +369,32 @@ public class DefaultJWTService implements JWTService, InitializingBean {
 	    }
 	}
 	return authoritiesAsString;
+    }
+
+    private boolean isXSRFProtectionDisabled(Parameters parameters) {
+	return parameters != null && parameters.isTrue(Parameters.KEY_DISABLE_XSRF_PROTECTION);
+    }
+
+    private void handleJWTContext(HttpServletRequest request, HttpServletResponse response, JWTContext jwtContext) {
+	if (jwtContext != null && jwtContext.isAuthenticated()) {
+	    JWTAuthentication authentication = jwtContext.getAuthentication();
+	    SecurityContextHolder.getContext().setAuthentication(authentication);
+	    jwtRequestResponseHandler.putTokenToResponse(request, response, jwtContext.getTokenContainer());
+	}
+    }
+
+    private Collection<GrantedAuthority> getAuthorities(Claims claims) {
+	String authoritiesAsString = claims.get(authoritiesParameterName, String.class);
+	if (authoritiesAsString == null || authoritiesAsString.isEmpty()) {
+	    return null;
+	} else {
+	    List<String> authoritiesStringList = Arrays.asList(authoritiesAsString.split(","));
+	    List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
+	    for (String authority : authoritiesStringList) {
+		authorities.add(new SimpleGrantedAuthority(authority));
+	    }
+	    return authorities;
+	}
     }
 
 }

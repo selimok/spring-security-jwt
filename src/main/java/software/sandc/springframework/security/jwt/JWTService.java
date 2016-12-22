@@ -6,6 +6,7 @@ import javax.servlet.http.HttpServletResponse;
 import software.sandc.springframework.security.jwt.model.Credentials;
 import software.sandc.springframework.security.jwt.model.JWTAuthentication;
 import software.sandc.springframework.security.jwt.model.JWTContext;
+import software.sandc.springframework.security.jwt.model.Parameters;
 import software.sandc.springframework.security.jwt.model.TokenContainer;
 import software.sandc.springframework.security.jwt.model.exception.ExpiredTokenException;
 import software.sandc.springframework.security.jwt.model.exception.InvalidTokenException;
@@ -73,9 +74,14 @@ public interface JWTService {
      *            token handling)
      * @param response
      *            HTTP response
+     * @param parameters
+     *            Additional parameters to customize processing of the request.
+     *            Possible parameters and their effects may differ depending on
+     *            specific implementation. The parameters may be empty or null.
      * @return A fully fledged {@link JWTContext} object.
      */
-    public JWTContext createAndAttach(String principal, HttpServletRequest request, HttpServletResponse response);
+    public JWTContext createAndAttach(String principal, HttpServletRequest request, HttpServletResponse response,
+	    Parameters parameters);
 
     /**
      * Create a fully fledged {@link JWTContext} for given principal.
@@ -83,9 +89,13 @@ public interface JWTService {
      * @param principal
      *            Unique user identifier. This can be the user name or user id
      *            according to underlying implementation.
+     * @param parameters
+     *            Additional parameters to customize processing of the request.
+     *            Possible parameters and their effects may differ depending on
+     *            specific implementation. The parameters may be empty or null.
      * @return A fully fledged {@link JWTContext} object.
      */
-    public JWTContext create(String principal);
+    public JWTContext create(String principal, Parameters parameters);
 
     /**
      * Renew tokens given in the {@link TokenContainer} object.
@@ -93,9 +103,13 @@ public interface JWTService {
      * @param tokenContainer
      *            {@link TokenContainer} instance which contains JWT and XSRF
      *            tokens.
+     * @param parameters
+     *            Additional parameters to customize processing of the request.
+     *            Possible parameters and their effects may differ depending on
+     *            specific implementation. The parameters may be empty or null.
      * @return A fully fledged {@link JWTContext} object.
      */
-    public JWTContext renew(TokenContainer tokenContainer);
+    public JWTContext renew(TokenContainer tokenContainer, Parameters parameters);
 
     /**
      * Validate tokens given in a {@link TokenContainer} instance. Validation
@@ -105,17 +119,18 @@ public interface JWTService {
      * @param tokenContainer
      *            {@link TokenContainer} instance which contains JWT and XSRF
      *            tokens.
-     * @param ignoreExpiry
-     *            If this flag is true the validation ignores token expiration
-     *            dates and an expired token may be considered as valid, if all
-     *            other integrity checks are passed.
+     * @param parameters
+     *            Additional parameters to customize processing of the request.
+     *            Possible parameters and their effects may differ depending on
+     *            specific implementation. The parameters may be empty or null.
+     *            
      * @return A fully fledged {@link JWTContext} object.
      * @throws InvalidTokenException
      *             if the token is not valid or its integrity is not ensured.
      * @throws ExpiredTokenException
      *             if the token is expired.
      */
-    public JWTContext validate(TokenContainer tokenContainer, boolean ignoreExpiry)
+    public JWTContext validate(TokenContainer tokenContainer, Parameters parameters)
 	    throws InvalidTokenException, ExpiredTokenException;
 
 }
