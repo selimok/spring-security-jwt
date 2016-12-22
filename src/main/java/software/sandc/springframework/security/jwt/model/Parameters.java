@@ -35,6 +35,20 @@ public class Parameters {
 	}
     }
 
+    /**
+     * Merge given parameters into existing parameters. Given parameters overwrites existing parameters, if their keys are equal.
+     * 
+     * @param parametersToMerge {@link Parameters} to merge.
+     */
+    public void merge(Parameters parametersToMerge) {
+        if(parametersToMerge != null){
+            Map<String, Object> parameterMapToMerge = parametersToMerge.getParameterMap();
+            if(parameterMapToMerge != null){
+        	this.parameterMap.putAll(parameterMapToMerge);        	
+            }
+        }
+    }
+
     public void put(String key, Object value) {
 	parameterMap.put(key, value);
     }

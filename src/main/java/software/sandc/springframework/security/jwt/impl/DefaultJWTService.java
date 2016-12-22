@@ -115,6 +115,11 @@ public class DefaultJWTService implements JWTService, InitializingBean {
 	    Parameters parameters) {
 	JWTContext jwtContext = null;
 	if (principal != null) {
+	    Parameters parametersFromRequest = jwtRequestResponseHandler.getParametersFromRequest(request);
+	    if (parametersFromRequest != null) {
+		parametersFromRequest.merge(parameters);
+		parameters = parametersFromRequest;
+	    }
 	    jwtContext = create(principal, parameters);
 	    handleJWTContext(request, response, jwtContext);
 	}

@@ -32,13 +32,13 @@ public interface JWTRequestResponseHandler {
     public TokenContainer getTokenFromRequest(HttpServletRequest request);
 
     /**
-     * Extract {@link Parameter} from HTTP request. The content of the returned
+     * Extract {@link Parameters} from HTTP request. The content of the returned
      * {@link Parameters} object may vary depending on the underlying
      * implementation.
      * 
      * @param request
      *            HTTP request.
-     * @return {@link Parameter} object extracted from HTTP request. This value
+     * @return {@link Parameters} object extracted from HTTP request. This value
      *         may be <b>null</b>.
      */
     public Parameters getParametersFromRequest(HttpServletRequest request);
