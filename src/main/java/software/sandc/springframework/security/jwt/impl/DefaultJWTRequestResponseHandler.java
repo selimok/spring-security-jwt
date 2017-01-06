@@ -54,10 +54,13 @@ public class DefaultJWTRequestResponseHandler implements JWTRequestResponseHandl
     public void putTokenToResponse(HttpServletRequest request, HttpServletResponse response,
             TokenContainer tokenContainer) {
 
+        String jwtToken = tokenContainer.getJwtToken();
+        
         if (isJWTRequestedInMobileMode(request)) {
-            response.addHeader(jwtResponseHeaderParameter, tokenContainer.getJwtToken());
+            response.setHeader(jwtResponseHeaderParameter, jwtToken);
+            
         } else {
-            Cookie jwtTokenCookie = new Cookie(jwtCookieParameter, tokenContainer.getJwtToken());
+            Cookie jwtTokenCookie = new Cookie(jwtCookieParameter, jwtToken);
             // Setting JWT token as HttpOnly is really important. JWT Token
             // should only be readable by browser and none of java script codes.
             // Otherwise token can be breached in case of XSS attacks.

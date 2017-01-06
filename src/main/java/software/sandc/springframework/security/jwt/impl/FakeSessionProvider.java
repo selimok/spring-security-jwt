@@ -18,4 +18,15 @@ public class FakeSessionProvider implements SessionProvider {
         // Do nothing
     }
 
+    @Override
+    public void refreshSession(String sessionId) {
+        // Do nothing
+        
+    }
+    
+    @Override
+    public void removeSession(String sessionId) {
+        // Do nothing
+    }
+
 }

@@ -1,5 +1,6 @@
 package software.sandc.springframework.security.jwt.impl;
 
+import java.security.PrivateKey;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -9,8 +10,9 @@ import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.xml.bind.DatatypeConverter;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.security.authentication.AccountStatusUserDetailsChecker;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
@@ -34,6 +36,8 @@ import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.SigningKeyResolver;
+import io.jsonwebtoken.UnsupportedJwtException;
+import io.jsonwebtoken.impl.TextCodec;
 import software.sandc.springframework.security.jwt.JWTRequestResponseHandler;
 import software.sandc.springframework.security.jwt.JWTService;
 import software.sandc.springframework.security.jwt.KeyProvider;
@@ -48,9 +52,11 @@ import software.sandc.springframework.security.jwt.model.exception.InvalidSessio
 import software.sandc.springframework.security.jwt.model.exception.InvalidTokenException;
 import software.sandc.springframework.security.jwt.model.exception.TokenRenewalException;
 import software.sandc.springframework.security.jwt.model.exception.UserNotFoundException;
+import software.sandc.springframework.security.jwt.util.RSAUtils;
 import software.sandc.springframework.security.jwt.util.StringUtils;
 
 public class DefaultJWTService implements JWTService, InitializingBean {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultJWTService.class);
     private static final Integer TEN_YEARS_IN_SECONDS = 315360000;
 
     public static final String SPRING_SECURITY_JWT_KEY_ID_PARAMETER_NAME = "kid";
@@ -90,7 +96,7 @@ public class DefaultJWTService implements JWTService, InitializingBean {
                 handleJWTContext(request, response, jwtContext);
             }
         } catch (AuthenticationException e) {
-            // TODO: Log but do nothing else.
+            LOGGER.debug("Authentication failed for provided JWT token. " + e.getMessage());
         }
         return jwtContext;
     }
@@ -142,7 +148,6 @@ public class DefaultJWTService implements JWTService, InitializingBean {
         String keyId = keyProvider.getCurrentSigningKeyId();
         String signingKey = keyProvider.getPrivateKey(keyId);
         SignatureAlgorithm signatureAlgorithm = keyProvider.getSignatureAlgorithm(keyId);
-        byte[] binarySigningKey = DatatypeConverter.parseBase64Binary(signingKey);
         Date now = new Date();
         Date sessionExpiry = new Date(System.currentTimeMillis() + (tokenLifetime * 1000));
         String xsrfToken = null;
@@ -158,17 +163,27 @@ public class DefaultJWTService implements JWTService, InitializingBean {
             claims.put(xsrfParameterName, xsrfToken);
         }
         claims.put(authoritiesParameterName, authoritiesAsString);
+        String sessionId = null;
         if (sessionProvider != null) {
-            claims.put(sessionIdParameterName, sessionProvider.createSession(principal));
+             sessionId = sessionProvider.createSession(principal);
+            claims.put(sessionIdParameterName, sessionId);
         }
 
         JwtBuilder jwtBuilder = Jwts.builder().setHeaderParam(JwsHeader.KEY_ID, keyId).setClaims(claims)
-                .setSubject(userDetails.getUsername()).setIssuedAt(now).setNotBefore(now).setExpiration(sessionExpiry)
-                .signWith(signatureAlgorithm, binarySigningKey);
+                .setSubject(userDetails.getUsername()).setIssuedAt(now).setNotBefore(now).setExpiration(sessionExpiry);
+
+        if (signatureAlgorithm.isHmac()) {
+            byte[] binarySigningKey = TextCodec.BASE64.decode(signingKey);
+            jwtBuilder = jwtBuilder.signWith(signatureAlgorithm, binarySigningKey);
+        } else if (signatureAlgorithm.isRsa()) {
+            PrivateKey privateKey = RSAUtils.toPrivateKey(signingKey);
+            jwtBuilder = jwtBuilder.signWith(signatureAlgorithm, privateKey);
+        }else{
+            throw new UnsupportedJwtException("Not supported signature algorithm " + signatureAlgorithm.getValue());
+        }
+
         String jwtToken = jwtBuilder.compact();
-
-        JWTContext jwtContext = createJWTContext(principal, xsrfToken, authorities, jwtToken);
-
+        JWTContext jwtContext = createJWTContext(principal, sessionId, xsrfToken, authorities, jwtToken);
         return jwtContext;
     }
 
@@ -213,8 +228,9 @@ public class DefaultJWTService implements JWTService, InitializingBean {
             String xsrfToken = tokenContainer.getXsrfToken();
             validateXSRF(claims, xsrfToken);
             String principal = extractPrincipal(claims);
+            String sessionId = extractSessionId(claims);
             Collection<GrantedAuthority> authorities = getAuthorities(claims);
-            JWTContext jwtContext = createJWTContext(principal, xsrfToken, authorities, jwtToken);
+            JWTContext jwtContext = createJWTContext(principal, sessionId, xsrfToken, authorities, jwtToken);
             return jwtContext;
         } catch (ExpiredJwtException e) {
             throw new ExpiredTokenException("JWT Token is expired.");
@@ -331,10 +347,10 @@ public class DefaultJWTService implements JWTService, InitializingBean {
         return sessionId;
     }
 
-    protected JWTContext createJWTContext(String principal, String xsrfToken,
+    protected JWTContext createJWTContext(String principal, String sessionId, String xsrfToken,
             Collection<? extends GrantedAuthority> authorities, String jwtToken) {
         TokenContainer tokenContainer = new TokenContainer(jwtToken, xsrfToken);
-        JWTAuthentication authentication = new JWTAuthentication(principal, authorities);
+        JWTAuthentication authentication = new JWTAuthentication(principal, sessionId, authorities);
         JWTContext jwtContext = new JWTContext(authentication, tokenContainer);
         return jwtContext;
     }

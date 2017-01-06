@@ -19,6 +19,8 @@ public class JWTAuthentication extends AbstractAuthenticationToken {
 
     private final String principal;
 
+    private final String sessionId;
+
     /**
      * Create a {@link JWTAuthentication} instance for a specific user
      * (identified by principal parameter) and its authorities (roles and
@@ -34,6 +36,29 @@ public class JWTAuthentication extends AbstractAuthenticationToken {
     public JWTAuthentication(String principal, Collection<? extends GrantedAuthority> authorities) {
         super(authorities);
         this.principal = principal;
+        this.sessionId = null;
+        this.setAuthenticated(true);
+    }
+
+    /**
+     * Create a {@link JWTAuthentication} instance for a specific user
+     * (identified by principal parameter), session id and its authorities (roles and
+     * rights).
+     * 
+     * @param principal
+     *            Unique user identifier like user name, user id, email address
+     *            etc.
+     * @param sessionId
+     *            An additional session identifier to link user a specific
+     *            session. The session id may be null.
+     * @param authorities
+     *            the collection of {@link GrantedAuthority}'s for the principal
+     *            represented by this authentication object.
+     */
+    public JWTAuthentication(String principal, String sessionId, Collection<? extends GrantedAuthority> authorities) {
+        super(authorities);
+        this.principal = principal;
+        this.sessionId = sessionId;
         this.setAuthenticated(true);
     }
 
@@ -51,6 +76,10 @@ public class JWTAuthentication extends AbstractAuthenticationToken {
     @Override
     public String getPrincipal() {
         return this.principal;
+    }
+    
+    public String getSessionId(){
+        return this.sessionId;
     }
 
 }

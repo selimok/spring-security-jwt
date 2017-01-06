@@ -16,6 +16,7 @@
 		<spring-security.version>4.1.3.RELEASE</spring-security.version>
 		<jjwt.version>0.7.0</jjwt.version>
 		<jgitflow.version>1.0-m5</jgitflow.version>
+		<slf4j.version>1.7.22</slf4j.version>
 	</properties>
 
 	<dependencies>
@@ -44,7 +45,12 @@
 			<scope>compile</scope>
 			<optional>true</optional>
 		</dependency>
-
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>${slf4j.version}</version>
+			<optional>true</optional>
+		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>

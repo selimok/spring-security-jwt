@@ -59,4 +59,21 @@ public interface SessionProvider {
      */
     public void invalidateSession(String sessionId);
 
+    /**
+     * Refreshes given session (referenced by session id). Depending on the
+     * implementation this method may refresh session related data like last
+     * touch time, ip address, agent details etc.
+     * 
+     * @param sessionId
+     *            Unique session id.
+     */
+    public void refreshSession(String sessionId);
+    
+    /**
+     * Remove given session (referenced by session id).
+     * 
+     * @param sessionId
+     *            Unique session id.
+     */
+    public void removeSession(String sessionId);
 }
