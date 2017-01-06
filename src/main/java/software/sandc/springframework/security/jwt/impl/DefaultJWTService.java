@@ -73,7 +73,8 @@ public class DefaultJWTService implements JWTService, InitializingBean {
     protected String sessionIdParameterName = SPRING_SECURITY_JWT_SESSION_ID_PARAMETER_NAME;
     protected String xsrfParameterName = SPRING_SECURITY_JWT_XSRF_PARAMETER_NAME;
     protected String authoritiesParameterName = SPRING_SECURITY_JWT_AUTHORITIES_PARAMETER_NAME;
-    protected int tokenLifetime = 600;
+    protected int tokenLifetimeInSeconds = 600;
+    protected int sessionInvalidationDelayInMinutes = 5;
 
     public DefaultJWTService(UserDetailsService userDetailsService) {
         this.userDetailsService = userDetailsService;
@@ -149,7 +150,7 @@ public class DefaultJWTService implements JWTService, InitializingBean {
         String signingKey = keyProvider.getPrivateKey(keyId);
         SignatureAlgorithm signatureAlgorithm = keyProvider.getSignatureAlgorithm(keyId);
         Date now = new Date();
-        Date sessionExpiry = new Date(System.currentTimeMillis() + (tokenLifetime * 1000));
+        Date sessionExpiry = new Date(System.currentTimeMillis() + (tokenLifetimeInSeconds * 1000));
         String xsrfToken = null;
         if (!isXSRFProtectionDisabled(parameters)) {
             xsrfToken = generateXSRFToken();
@@ -165,7 +166,7 @@ public class DefaultJWTService implements JWTService, InitializingBean {
         claims.put(authoritiesParameterName, authoritiesAsString);
         String sessionId = null;
         if (sessionProvider != null) {
-             sessionId = sessionProvider.createSession(principal);
+            sessionId = sessionProvider.createSession(principal);
             claims.put(sessionIdParameterName, sessionId);
         }
 
@@ -178,7 +179,7 @@ public class DefaultJWTService implements JWTService, InitializingBean {
         } else if (signatureAlgorithm.isRsa()) {
             PrivateKey privateKey = RSAUtils.toPrivateKey(signingKey);
             jwtBuilder = jwtBuilder.signWith(signatureAlgorithm, privateKey);
-        }else{
+        } else {
             throw new UnsupportedJwtException("Not supported signature algorithm " + signatureAlgorithm.getValue());
         }
 
@@ -206,6 +207,7 @@ public class DefaultJWTService implements JWTService, InitializingBean {
         String principal = extractPrincipal(claims);
 
         if (sessionProvider.isSessionValid(sessionId)) {
+            invalidateSession(principal, sessionId);
             return create(principal, parameters);
         } else {
             throw new InvalidSessionException("Token session does not exist or not valid anymore.");
@@ -325,11 +327,27 @@ public class DefaultJWTService implements JWTService, InitializingBean {
     /**
      * Set token lifetime in seconds.
      * 
-     * @param tokenLifetime
+     * @param tokenLifetimeInSeconds
      *            Token lifetime in seconds.
      */
-    public void setTokenLifetime(int tokenLifetime) {
-        this.tokenLifetime = tokenLifetime;
+    public void setTokenLifetime(int tokenLifetimeInSeconds) {
+        this.tokenLifetimeInSeconds = tokenLifetimeInSeconds;
+    }
+
+    /**
+     * Set session invalidation delay in minutes.
+     * 
+     * @param sessionInvalidationDelayInMinutes
+     *            Session invalidation delay in minutes.
+     */
+    public void setSessionInvalidationDelayInMinutes(int sessionInvalidationDelayInMinutes) {
+        this.sessionInvalidationDelayInMinutes = sessionInvalidationDelayInMinutes;
+    }
+
+    public void invalidateSession(String principal, String sessionId) {
+        if (sessionProvider != null) {
+            sessionProvider.invalidateSessionAfterMinutes(sessionId, sessionInvalidationDelayInMinutes);
+        }
     }
 
     protected String extractPrincipal(Claims claims) {
@@ -392,19 +410,16 @@ public class DefaultJWTService implements JWTService, InitializingBean {
         return authoritiesAsString;
     }
 
-    private boolean isXSRFProtectionDisabled(Parameters parameters) {
-        return parameters != null && parameters.isTrue(Parameters.KEY_DISABLE_XSRF_PROTECTION);
-    }
-
-    private void handleJWTContext(HttpServletRequest request, HttpServletResponse response, JWTContext jwtContext) {
+    protected void handleJWTContext(HttpServletRequest request, HttpServletResponse response, JWTContext jwtContext) {
         if (jwtContext != null && jwtContext.isAuthenticated()) {
             JWTAuthentication authentication = jwtContext.getAuthentication();
             SecurityContextHolder.getContext().setAuthentication(authentication);
+            sessionProvider.refreshSession(authentication.getSessionId());
             jwtRequestResponseHandler.putTokenToResponse(request, response, jwtContext.getTokenContainer());
         }
     }
 
-    private Collection<GrantedAuthority> getAuthorities(Claims claims) {
+    protected Collection<GrantedAuthority> getAuthorities(Claims claims) {
         String authoritiesAsString = claims.get(authoritiesParameterName, String.class);
         if (authoritiesAsString == null || authoritiesAsString.isEmpty()) {
             return null;
@@ -416,6 +431,10 @@ public class DefaultJWTService implements JWTService, InitializingBean {
             }
             return authorities;
         }
+    }
+
+    protected boolean isXSRFProtectionDisabled(Parameters parameters) {
+        return parameters != null && parameters.isTrue(Parameters.KEY_DISABLE_XSRF_PROTECTION);
     }
 
 }

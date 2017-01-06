@@ -60,6 +60,15 @@ public interface SessionProvider {
     public void invalidateSession(String sessionId);
 
     /**
+     * Revokes given session (referenced by session id) with delay.
+     *
+     * @param sessionId
+     *            Unique session id.
+     * @param minutes Delay in minutes
+     */
+    public void invalidateSessionAfterMinutes(String sessionId, Integer minutes);
+
+    /**
      * Refreshes given session (referenced by session id). Depending on the
      * implementation this method may refresh session related data like last
      * touch time, ip address, agent details etc.
@@ -68,7 +77,7 @@ public interface SessionProvider {
      *            Unique session id.
      */
     public void refreshSession(String sessionId);
-    
+
     /**
      * Remove given session (referenced by session id).
      * 

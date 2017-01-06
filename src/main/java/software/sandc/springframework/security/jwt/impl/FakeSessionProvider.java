@@ -19,6 +19,11 @@ public class FakeSessionProvider implements SessionProvider {
     }
 
     @Override
+    public void invalidateSessionAfterMinutes(String sessionId, Integer minutes) {
+        // Do nothing
+    }
+
+    @Override
     public void refreshSession(String sessionId) {
         // Do nothing
         
