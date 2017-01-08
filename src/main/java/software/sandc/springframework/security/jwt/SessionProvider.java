@@ -64,7 +64,8 @@ public interface SessionProvider {
      *
      * @param sessionId
      *            Unique session id.
-     * @param minutes Delay in minutes
+     * @param minutes
+     *            Delay in minutes
      */
     public void invalidateSessionAfterMinutes(String sessionId, Integer minutes);
 
@@ -85,4 +86,14 @@ public interface SessionProvider {
      *            Unique session id.
      */
     public void removeSession(String sessionId);
+
+    /**
+     * Redirect session to a specific session. 
+     * 
+     * @param sourceSessionId
+     *            Unique id of the source session.
+     * @param targetSessionId
+     *            Unique id of the target session.
+     */
+    public void redirectSession(String sourceSessionId, String targetSessionId);
 }

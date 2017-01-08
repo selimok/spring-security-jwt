@@ -59,7 +59,6 @@ public class DefaultJWTService implements JWTService, InitializingBean {
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultJWTService.class);
     private static final Integer TEN_YEARS_IN_SECONDS = 315360000;
 
-    public static final String SPRING_SECURITY_JWT_KEY_ID_PARAMETER_NAME = "kid";
     public static final String SPRING_SECURITY_JWT_SESSION_ID_PARAMETER_NAME = "jti";
     public static final String SPRING_SECURITY_JWT_XSRF_PARAMETER_NAME = "xsrf-token";
     public static final String SPRING_SECURITY_JWT_AUTHORITIES_PARAMETER_NAME = "authorities";
@@ -93,7 +92,8 @@ public class DefaultJWTService implements JWTService, InitializingBean {
                         Parameters parameters = jwtRequestResponseHandler.getParametersFromRequest(request);
                         jwtContext = renew(tokenContainer, parameters);
                     }
-                }
+                }                
+                refreshSession(jwtContext);
                 handleJWTContext(request, response, jwtContext);
             }
         } catch (AuthenticationException e) {
@@ -410,11 +410,18 @@ public class DefaultJWTService implements JWTService, InitializingBean {
         return authoritiesAsString;
     }
 
+    protected void refreshSession(JWTContext jwtContext) {
+        if (jwtContext != null && jwtContext.isAuthenticated() && sessionProvider != null) {
+            JWTAuthentication authentication = jwtContext.getAuthentication();
+            sessionProvider.refreshSession(authentication.getSessionId());
+        }
+    }
+    
+    
     protected void handleJWTContext(HttpServletRequest request, HttpServletResponse response, JWTContext jwtContext) {
         if (jwtContext != null && jwtContext.isAuthenticated()) {
             JWTAuthentication authentication = jwtContext.getAuthentication();
             SecurityContextHolder.getContext().setAuthentication(authentication);
-            sessionProvider.refreshSession(authentication.getSessionId());
             jwtRequestResponseHandler.putTokenToResponse(request, response, jwtContext.getTokenContainer());
         }
     }

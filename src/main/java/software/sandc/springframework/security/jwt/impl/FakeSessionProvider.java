@@ -34,4 +34,10 @@ public class FakeSessionProvider implements SessionProvider {
         // Do nothing
     }
 
+    @Override
+    public void redirectSession(String sourceSessionId, String targetSessionId) {
+        // Do nothing
+        
+    }
+
 }
