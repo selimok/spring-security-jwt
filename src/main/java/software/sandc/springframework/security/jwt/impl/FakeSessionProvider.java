@@ -26,7 +26,6 @@ public class FakeSessionProvider implements SessionProvider {
     @Override
     public void refreshSession(String sessionId) {
         // Do nothing
-        
     }
     
     @Override
@@ -37,7 +36,6 @@ public class FakeSessionProvider implements SessionProvider {
     @Override
     public void redirectSession(String sourceSessionId, String targetSessionId) {
         // Do nothing
-        
     }
 
 }
