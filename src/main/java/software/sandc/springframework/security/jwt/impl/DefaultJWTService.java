@@ -207,8 +207,8 @@ public class DefaultJWTService implements JWTService, InitializingBean {
         String principal = extractPrincipal(claims);
 
         if (sessionProvider.isSessionValid(sessionId)) {
-            invalidateSession(principal, sessionId);
-            return create(principal, parameters);
+            return createNewSessionAndInvalidateOldSession(principal, sessionId, parameters);
+            //return create(principal, parameters);
         } else {
             throw new InvalidSessionException("Token session does not exist or not valid anymore.");
         }
@@ -344,10 +344,18 @@ public class DefaultJWTService implements JWTService, InitializingBean {
         this.sessionInvalidationDelayInMinutes = sessionInvalidationDelayInMinutes;
     }
 
-    public void invalidateSession(String principal, String sessionId) {
+    public JWTContext createNewSessionAndInvalidateOldSession(String principal, String oldSessionId, Parameters parameters) {
         if (sessionProvider != null) {
-            sessionProvider.invalidateSessionAfterMinutes(sessionId, sessionInvalidationDelayInMinutes);
+            sessionProvider.invalidateSessionAfterMinutes(oldSessionId, sessionInvalidationDelayInMinutes);
         }
+        JWTContext jwtContext = create(principal, parameters);
+        
+        if (sessionProvider != null) {
+            String newSessionId = jwtContext.getAuthentication().getSessionId();
+            sessionProvider.redirectSession(oldSessionId, newSessionId);
+        }
+        
+        return jwtContext;
     }
 
     protected String extractPrincipal(Claims claims) {
