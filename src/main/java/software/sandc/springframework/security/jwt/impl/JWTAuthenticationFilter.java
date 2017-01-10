@@ -7,6 +7,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.util.Assert;
@@ -16,6 +18,8 @@ import software.sandc.springframework.security.jwt.JWTService;
 import software.sandc.springframework.security.jwt.model.JWTContext;
 
 public class JWTAuthenticationFilter extends OncePerRequestFilter {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(JWTAuthenticationFilter.class);
 
     protected final JWTService jwtService;
 
@@ -36,7 +40,7 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
         try {
             attemptAuthentication(request, response);
         } catch (AuthenticationException authenticationException) {
-            handleAuthenticationException(request, response, filterChain);
+            handleAuthenticationException(authenticationException, request, response, filterChain);
         }
 
         filterChain.doFilter(request, response);
@@ -52,9 +56,10 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
         return authentication;
     }
 
-    protected void handleAuthenticationException(HttpServletRequest request, HttpServletResponse response,
+    protected void handleAuthenticationException(AuthenticationException authenticationException, HttpServletRequest request, HttpServletResponse response,
             FilterChain filterChain) throws IOException, ServletException {
         // Do nothing
+        LOGGER.debug("Authentication failed for provided JWT token. " + authenticationException.getMessage());
     }
 
 }

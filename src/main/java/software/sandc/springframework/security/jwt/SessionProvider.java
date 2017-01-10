@@ -58,16 +58,14 @@ public interface SessionProvider {
      *            Unique session id.
      */
     public void invalidateSession(String sessionId);
-
+    
     /**
-     * Revokes given session (referenced by session id) with delay.
-     *
-     * @param sessionId
-     *            Unique session id.
-     * @param minutes
-     *            Delay in minutes
+     * Create a new session and invalidate existing session.
+     * 
+     * @param sessionId Unique session id of 
+     * @return Newly created session id.
      */
-    public void invalidateSessionAfterMinutes(String sessionId, Integer minutes);
+    public String renewSession(String sessionId);
 
     /**
      * Refreshes given session (referenced by session id). Depending on the
@@ -87,13 +85,4 @@ public interface SessionProvider {
      */
     public void removeSession(String sessionId);
 
-    /**
-     * Redirect session to a specific session. 
-     * 
-     * @param sourceSessionId
-     *            Unique id of the source session.
-     * @param targetSessionId
-     *            Unique id of the target session.
-     */
-    public void redirectSession(String sourceSessionId, String targetSessionId);
 }

@@ -11,12 +11,9 @@ import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.security.authentication.AccountStatusUserDetailsChecker;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -56,7 +53,7 @@ import software.sandc.springframework.security.jwt.util.RSAUtils;
 import software.sandc.springframework.security.jwt.util.StringUtils;
 
 public class DefaultJWTService implements JWTService, InitializingBean {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultJWTService.class);
+    
     private static final Integer TEN_YEARS_IN_SECONDS = 315360000;
 
     public static final String SPRING_SECURITY_JWT_SESSION_ID_PARAMETER_NAME = "jti";
@@ -81,23 +78,19 @@ public class DefaultJWTService implements JWTService, InitializingBean {
 
     public JWTContext authenticateJWTRequest(HttpServletRequest request, HttpServletResponse response) {
         JWTContext jwtContext = null;
-        try {
-            TokenContainer tokenContainer = jwtRequestResponseHandler.getTokenFromRequest(request);
-            if (tokenContainer != null) {
-                try {
+        TokenContainer tokenContainer = jwtRequestResponseHandler.getTokenFromRequest(request);
+        if (tokenContainer != null) {
+            try {
+                Parameters parameters = jwtRequestResponseHandler.getParametersFromRequest(request);
+                jwtContext = validate(tokenContainer, parameters);
+            } catch (ExpiredTokenException e) {
+                if (isTokenRenewalEnabled()) {
                     Parameters parameters = jwtRequestResponseHandler.getParametersFromRequest(request);
-                    jwtContext = validate(tokenContainer, parameters);
-                } catch (ExpiredTokenException e) {
-                    if (isTokenRenewalEnabled()) {
-                        Parameters parameters = jwtRequestResponseHandler.getParametersFromRequest(request);
-                        jwtContext = renew(tokenContainer, parameters);
-                    }
-                }                
-                refreshSession(jwtContext);
-                handleJWTContext(request, response, jwtContext);
+                    jwtContext = renew(tokenContainer, parameters);
+                }
             }
-        } catch (AuthenticationException e) {
-            LOGGER.debug("Authentication failed for provided JWT token. " + e.getMessage());
+            refreshSession(jwtContext);
+            handleJWTContext(request, response, jwtContext);
         }
         return jwtContext;
     }
@@ -166,8 +159,15 @@ public class DefaultJWTService implements JWTService, InitializingBean {
         claims.put(authoritiesParameterName, authoritiesAsString);
         String sessionId = null;
         if (sessionProvider != null) {
-            sessionId = sessionProvider.createSession(principal);
-            claims.put(sessionIdParameterName, sessionId);
+            sessionId = parameters.getString(Parameters.KEY_SESSION_ID);
+
+            if (sessionId == null || sessionId.isEmpty()) {
+                sessionId = sessionProvider.createSession(principal);
+            }
+
+            if (sessionId != null && !sessionId.isEmpty()) {
+                claims.put(sessionIdParameterName, sessionId);
+            }
         }
 
         JwtBuilder jwtBuilder = Jwts.builder().setHeaderParam(JwsHeader.KEY_ID, keyId).setClaims(claims)
@@ -194,9 +194,9 @@ public class DefaultJWTService implements JWTService, InitializingBean {
         }
 
         boolean ignoreExpiry = true;
-        Parameters validationParameters = new Parameters(parameters);
-        validationParameters.put(Parameters.KEY_IGNORE_EXPIRY, ignoreExpiry);
-        validate(tokenContainer, validationParameters);
+        Parameters renewParameters = new Parameters(parameters);
+        renewParameters.put(Parameters.KEY_IGNORE_EXPIRY, ignoreExpiry);
+        validate(tokenContainer, renewParameters);
 
         JwtParser jwtParser = Jwts.parser().setSigningKeyResolver(signingKeyResolver)
                 .setAllowedClockSkewSeconds(TEN_YEARS_IN_SECONDS);
@@ -207,8 +207,10 @@ public class DefaultJWTService implements JWTService, InitializingBean {
         String principal = extractPrincipal(claims);
 
         if (sessionProvider.isSessionValid(sessionId)) {
-            return createNewSessionAndInvalidateOldSession(principal, sessionId, parameters);
-            //return create(principal, parameters);
+            String renewedSessionId = sessionProvider.renewSession(sessionId);
+            renewParameters.put(Parameters.KEY_SESSION_ID, renewedSessionId);
+            JWTContext jwtContext = create(principal, parameters);
+            return jwtContext;
         } else {
             throw new InvalidSessionException("Token session does not exist or not valid anymore.");
         }
@@ -344,20 +346,6 @@ public class DefaultJWTService implements JWTService, InitializingBean {
         this.sessionInvalidationDelayInMinutes = sessionInvalidationDelayInMinutes;
     }
 
-    public JWTContext createNewSessionAndInvalidateOldSession(String principal, String oldSessionId, Parameters parameters) {
-        if (sessionProvider != null) {
-            sessionProvider.invalidateSessionAfterMinutes(oldSessionId, sessionInvalidationDelayInMinutes);
-        }
-        JWTContext jwtContext = create(principal, parameters);
-        
-        if (sessionProvider != null) {
-            String newSessionId = jwtContext.getAuthentication().getSessionId();
-            sessionProvider.redirectSession(oldSessionId, newSessionId);
-        }
-        
-        return jwtContext;
-    }
-
     protected String extractPrincipal(Claims claims) {
         String principal = claims.getSubject();
 
@@ -424,8 +412,7 @@ public class DefaultJWTService implements JWTService, InitializingBean {
             sessionProvider.refreshSession(authentication.getSessionId());
         }
     }
-    
-    
+
     protected void handleJWTContext(HttpServletRequest request, HttpServletResponse response, JWTContext jwtContext) {
         if (jwtContext != null && jwtContext.isAuthenticated()) {
             JWTAuthentication authentication = jwtContext.getAuthentication();

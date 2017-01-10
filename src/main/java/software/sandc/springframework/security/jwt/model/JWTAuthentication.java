@@ -42,8 +42,8 @@ public class JWTAuthentication extends AbstractAuthenticationToken {
 
     /**
      * Create a {@link JWTAuthentication} instance for a specific user
-     * (identified by principal parameter), session id and its authorities (roles and
-     * rights).
+     * (identified by principal parameter), session id and its authorities
+     * (roles and rights).
      * 
      * @param principal
      *            Unique user identifier like user name, user id, email address
@@ -77,8 +77,8 @@ public class JWTAuthentication extends AbstractAuthenticationToken {
     public String getPrincipal() {
         return this.principal;
     }
-    
-    public String getSessionId(){
+
+    public String getSessionId() {
         return this.sessionId;
     }
 
