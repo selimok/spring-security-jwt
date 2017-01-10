@@ -6,7 +6,7 @@ import java.util.Map;
 public class Parameters {
 
     public static final String KEY_IGNORE_EXPIRY = "ignoreExpiry";
-    public static final String KEY_DISABLE_XSRF_PROTECTION = "enableXSRFProtection";
+    public static final String KEY_DISABLE_XSRF_PROTECTION = "disableXSRFProtection";
     public static final String KEY_SESSION_ID = "sessionId";
 
     protected Map<String, Object> parameterMap;
