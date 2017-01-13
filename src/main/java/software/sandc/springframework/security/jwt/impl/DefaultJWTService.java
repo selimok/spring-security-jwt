@@ -332,7 +332,7 @@ public class DefaultJWTService implements JWTService, InitializingBean {
      * @param tokenLifetimeInSeconds
      *            Token lifetime in seconds.
      */
-    public void setTokenLifetime(int tokenLifetimeInSeconds) {
+    public void setTokenLifetimeInSeconds(int tokenLifetimeInSeconds) {
         this.tokenLifetimeInSeconds = tokenLifetimeInSeconds;
     }
 
