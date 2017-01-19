@@ -7,8 +7,9 @@ import javax.servlet.http.HttpServletResponse;
 import org.springframework.web.util.WebUtils;
 
 import software.sandc.springframework.security.jwt.JWTRequestResponseHandler;
-import software.sandc.springframework.security.jwt.model.Parameters;
 import software.sandc.springframework.security.jwt.model.TokenContainer;
+import software.sandc.springframework.security.jwt.model.parameter.DisableXSRFParameter;
+import software.sandc.springframework.security.jwt.model.parameter.Parameters;
 
 public class DefaultJWTRequestResponseHandler implements JWTRequestResponseHandler {
 
@@ -24,7 +25,7 @@ public class DefaultJWTRequestResponseHandler implements JWTRequestResponseHandl
 
     private String jwtCookieParameter = SPRING_SECURITY_JWT_COOKIE_JWT_PARAMETER;
     private String jwtRequestHeaderParameter = SPRING_SECURITY_JWT_REQUEST_HEADER_JWT;
-    private String jwtResponseHeaderParameter = SPRING_SECURITY_JWT_REQUEST_HEADER_JWT;
+    private String jwtResponseHeaderParameter = SPRING_SECURITY_JWT_RESPONSE_HEADER_JWT;
     private String jwtModeRequestHeaderParameter = SPRING_SECURITY_JWT_REQUEST_HEADER_JWT_MODE;
     private String xsrfCookieParameter = SPRING_SECURITY_JWT_COOKIE_XSRF_PARAMETER;
     private String xsrfRequestHeaderParameter = SPRING_SECURITY_JWT_REQUEST_HEADER_XSRF;
@@ -45,7 +46,7 @@ public class DefaultJWTRequestResponseHandler implements JWTRequestResponseHandl
     @Override
     public Parameters getParametersFromRequest(HttpServletRequest request) {
         if (isJWTRequestedInMobileMode(request)) {
-            return new Parameters(Parameters.KEY_DISABLE_XSRF_PROTECTION, true);
+            return new Parameters(new DisableXSRFParameter(true));
         }
         return null;
     }

@@ -21,6 +21,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsChecker;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.util.Assert;
 
 import io.jsonwebtoken.Claims;
@@ -42,18 +44,22 @@ import software.sandc.springframework.security.jwt.SessionProvider;
 import software.sandc.springframework.security.jwt.model.Credentials;
 import software.sandc.springframework.security.jwt.model.JWTAuthentication;
 import software.sandc.springframework.security.jwt.model.JWTContext;
-import software.sandc.springframework.security.jwt.model.Parameters;
 import software.sandc.springframework.security.jwt.model.TokenContainer;
 import software.sandc.springframework.security.jwt.model.exception.ExpiredTokenException;
 import software.sandc.springframework.security.jwt.model.exception.InvalidSessionException;
 import software.sandc.springframework.security.jwt.model.exception.InvalidTokenException;
 import software.sandc.springframework.security.jwt.model.exception.TokenRenewalException;
 import software.sandc.springframework.security.jwt.model.exception.UserNotFoundException;
+import software.sandc.springframework.security.jwt.model.parameter.DisableXSRFParameter;
+import software.sandc.springframework.security.jwt.model.parameter.IgnoreExpiryParameter;
+import software.sandc.springframework.security.jwt.model.parameter.Parameters;
+import software.sandc.springframework.security.jwt.model.parameter.SessionIdParameter;
+import software.sandc.springframework.security.jwt.util.BooleanUtils;
 import software.sandc.springframework.security.jwt.util.RSAUtils;
 import software.sandc.springframework.security.jwt.util.StringUtils;
 
 public class DefaultJWTService implements JWTService, InitializingBean {
-    
+
     private static final Integer TEN_YEARS_IN_SECONDS = 315360000;
 
     public static final String SPRING_SECURITY_JWT_SESSION_ID_PARAMETER_NAME = "jti";
@@ -71,6 +77,7 @@ public class DefaultJWTService implements JWTService, InitializingBean {
     protected String authoritiesParameterName = SPRING_SECURITY_JWT_AUTHORITIES_PARAMETER_NAME;
     protected int tokenLifetimeInSeconds = 600;
     protected int sessionInvalidationDelayInMinutes = 5;
+    protected PasswordEncoder passwordEncoder;
 
     public DefaultJWTService(UserDetailsService userDetailsService) {
         this.userDetailsService = userDetailsService;
@@ -102,7 +109,7 @@ public class DefaultJWTService implements JWTService, InitializingBean {
         String principal = credentials.getPrincipal();
         if (principal != null && password != null) {
             UserDetails userDetails = userDetailsService.loadUserByUsername(principal);
-            if (password.equals(userDetails.getPassword())) {
+            if (passwordEncoder.matches(password,userDetails.getPassword())) {
                 Parameters parameters = jwtRequestResponseHandler.getParametersFromRequest(request);
                 jwtContext = create(principal, parameters);
                 handleJWTContext(request, response, jwtContext);
@@ -159,7 +166,7 @@ public class DefaultJWTService implements JWTService, InitializingBean {
         claims.put(authoritiesParameterName, authoritiesAsString);
         String sessionId = null;
         if (sessionProvider != null) {
-            sessionId = parameters.getString(Parameters.KEY_SESSION_ID);
+            sessionId = parameters.getValueOf(SessionIdParameter.class);
 
             if (sessionId == null || sessionId.isEmpty()) {
                 sessionId = sessionProvider.createSession(principal);
@@ -195,7 +202,7 @@ public class DefaultJWTService implements JWTService, InitializingBean {
 
         boolean ignoreExpiry = true;
         Parameters renewParameters = new Parameters(parameters);
-        renewParameters.put(Parameters.KEY_IGNORE_EXPIRY, ignoreExpiry);
+        renewParameters.put(new IgnoreExpiryParameter(ignoreExpiry));
         validate(tokenContainer, renewParameters);
 
         JwtParser jwtParser = Jwts.parser().setSigningKeyResolver(signingKeyResolver)
@@ -208,7 +215,7 @@ public class DefaultJWTService implements JWTService, InitializingBean {
 
         if (sessionProvider.isSessionValid(sessionId)) {
             String renewedSessionId = sessionProvider.renewSession(sessionId);
-            renewParameters.put(Parameters.KEY_SESSION_ID, renewedSessionId);
+            renewParameters.put(new SessionIdParameter(renewedSessionId));
             JWTContext jwtContext = create(principal, parameters);
             return jwtContext;
         } else {
@@ -222,7 +229,7 @@ public class DefaultJWTService implements JWTService, InitializingBean {
             throw new InvalidTokenException("Token container is empty");
         }
         JwtParser jwtParser = Jwts.parser().setSigningKeyResolver(signingKeyResolver);
-        if (parameters != null && parameters.isTrue(Parameters.KEY_IGNORE_EXPIRY)) {
+        if (parameters != null && BooleanUtils.isTrue(parameters.getValueOf(IgnoreExpiryParameter.class))) {
             jwtParser = jwtParser.setAllowedClockSkewSeconds(TEN_YEARS_IN_SECONDS);
         }
         String jwtToken = tokenContainer.getJwtToken();
@@ -266,6 +273,10 @@ public class DefaultJWTService implements JWTService, InitializingBean {
 
         if (userDetailsChecker == null) {
             userDetailsChecker = new AccountStatusUserDetailsChecker();
+        }
+
+        if (passwordEncoder == null) {
+            passwordEncoder = new BCryptPasswordEncoder();
         }
 
     }
@@ -344,6 +355,16 @@ public class DefaultJWTService implements JWTService, InitializingBean {
      */
     public void setSessionInvalidationDelayInMinutes(int sessionInvalidationDelayInMinutes) {
         this.sessionInvalidationDelayInMinutes = sessionInvalidationDelayInMinutes;
+    }
+
+    /**
+     * Set custom password encoder.
+     * 
+     * @param passwordEncoder
+     *            Password encoder
+     */
+    public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
+        this.passwordEncoder = passwordEncoder;
     }
 
     protected String extractPrincipal(Claims claims) {
@@ -436,7 +457,8 @@ public class DefaultJWTService implements JWTService, InitializingBean {
     }
 
     protected boolean isXSRFProtectionDisabled(Parameters parameters) {
-        return parameters != null && parameters.isTrue(Parameters.KEY_DISABLE_XSRF_PROTECTION);
+        Boolean isXSRFProtectionDisabled = parameters.getValueOf(DisableXSRFParameter.class);
+        return parameters != null && BooleanUtils.isTrue(isXSRFProtectionDisabled);
     }
 
 }

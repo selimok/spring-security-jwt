@@ -3,8 +3,8 @@ package software.sandc.springframework.security.jwt;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import software.sandc.springframework.security.jwt.model.Parameters;
 import software.sandc.springframework.security.jwt.model.TokenContainer;
+import software.sandc.springframework.security.jwt.model.parameter.Parameters;
 
 /**
  * A {@link JWTRequestResponseHandler} implementation is responsible to extract

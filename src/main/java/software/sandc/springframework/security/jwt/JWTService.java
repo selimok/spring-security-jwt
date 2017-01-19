@@ -6,10 +6,10 @@ import javax.servlet.http.HttpServletResponse;
 import software.sandc.springframework.security.jwt.model.Credentials;
 import software.sandc.springframework.security.jwt.model.JWTAuthentication;
 import software.sandc.springframework.security.jwt.model.JWTContext;
-import software.sandc.springframework.security.jwt.model.Parameters;
 import software.sandc.springframework.security.jwt.model.TokenContainer;
 import software.sandc.springframework.security.jwt.model.exception.ExpiredTokenException;
 import software.sandc.springframework.security.jwt.model.exception.InvalidTokenException;
+import software.sandc.springframework.security.jwt.model.parameter.Parameters;
 
 /**
  * {@link JWTService} is the core component of spring security JWT extension. It
