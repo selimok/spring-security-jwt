@@ -98,7 +98,14 @@ public interface JWTService {
     public JWTContext create(String principal, Parameters parameters);
 
     /**
-     * Authenticate HTTP request if the request contains JWT and renew it if renewable.
+     * Authenticate HTTP request if the request contains JWT and renew it if
+     * renewable. <br>
+     * <br>
+     * The created {@link JWTAuthentication} object (which is also the part of
+     * {@link JWTContext}) is implicitly attached into SecurityContextHolder to
+     * inform spring security about the authenticated user.<br>
+     * <br>
+     * Renewed token will be attached automatically into the response object.
      * 
      * @param request
      *            HTTP request (may be used to read clients preferences for
