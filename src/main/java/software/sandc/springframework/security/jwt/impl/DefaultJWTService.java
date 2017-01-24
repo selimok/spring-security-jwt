@@ -83,6 +83,7 @@ public class DefaultJWTService implements JWTService, InitializingBean {
         this.userDetailsService = userDetailsService;
     }
 
+    @Override
     public JWTContext authenticateJWTRequest(HttpServletRequest request, HttpServletResponse response) {
         JWTContext jwtContext = null;
         TokenContainer tokenContainer = jwtRequestResponseHandler.getTokenFromRequest(request);
@@ -102,6 +103,7 @@ public class DefaultJWTService implements JWTService, InitializingBean {
         return jwtContext;
     }
 
+    @Override
     public JWTContext authenticateLoginRequest(Credentials credentials, HttpServletRequest request,
             HttpServletResponse response) {
         JWTContext jwtContext = null;
@@ -109,7 +111,7 @@ public class DefaultJWTService implements JWTService, InitializingBean {
         String principal = credentials.getPrincipal();
         if (principal != null && password != null) {
             UserDetails userDetails = userDetailsService.loadUserByUsername(principal);
-            if (passwordEncoder.matches(password,userDetails.getPassword())) {
+            if (passwordEncoder.matches(password, userDetails.getPassword())) {
                 Parameters parameters = jwtRequestResponseHandler.getParametersFromRequest(request);
                 jwtContext = create(principal, parameters);
                 handleJWTContext(request, response, jwtContext);
@@ -118,6 +120,7 @@ public class DefaultJWTService implements JWTService, InitializingBean {
         return jwtContext;
     }
 
+    @Override
     public JWTContext createAndAttach(String principal, HttpServletRequest request, HttpServletResponse response,
             Parameters parameters) {
         JWTContext jwtContext = null;
@@ -145,6 +148,7 @@ public class DefaultJWTService implements JWTService, InitializingBean {
      * @throws UserNotFoundException
      *             if the user identified with given principal cannot be found.
      */
+    @Override
     public JWTContext create(String principal, Parameters parameters) throws UserNotFoundException {
         String keyId = keyProvider.getCurrentSigningKeyId();
         String signingKey = keyProvider.getPrivateKey(keyId);
@@ -195,6 +199,20 @@ public class DefaultJWTService implements JWTService, InitializingBean {
         return jwtContext;
     }
 
+    @Override
+    public JWTContext renew(HttpServletRequest request, HttpServletResponse response) {
+        JWTContext jwtContext = null;
+        TokenContainer tokenContainer = jwtRequestResponseHandler.getTokenFromRequest(request);
+        if (tokenContainer != null) {
+            Parameters parameters = jwtRequestResponseHandler.getParametersFromRequest(request);
+            jwtContext = renew(tokenContainer, parameters);
+            refreshSession(jwtContext);
+            handleJWTContext(request, response, jwtContext);
+        }
+        return jwtContext;
+    }
+
+    @Override
     public JWTContext renew(TokenContainer tokenContainer, Parameters parameters) {
         if (sessionProvider == null) {
             throw new TokenRenewalException("No session provider found for token renewal.");
@@ -223,6 +241,7 @@ public class DefaultJWTService implements JWTService, InitializingBean {
         }
     }
 
+    @Override
     public JWTContext validate(TokenContainer tokenContainer, Parameters parameters)
             throws InvalidTokenException, ExpiredTokenException {
         if (tokenContainer == null) {

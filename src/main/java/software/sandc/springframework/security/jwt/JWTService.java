@@ -23,7 +23,7 @@ public interface JWTService {
 
     /**
      * Authenticate HTTP request if the request contains JWT and related tokens
-     * and tokens are valid.<br>
+     * are valid.<br>
      * <br>
      * The created {@link JWTAuthentication} object (which is also the part of
      * {@link JWTContext}) is implicitly attached into SecurityContextHolder to
@@ -96,6 +96,18 @@ public interface JWTService {
      * @return A fully fledged {@link JWTContext} object.
      */
     public JWTContext create(String principal, Parameters parameters);
+
+    /**
+     * Authenticate HTTP request if the request contains JWT and renew it if renewable.
+     * 
+     * @param request
+     *            HTTP request (may be used to read clients preferences for
+     *            token handling)
+     * @param response
+     *            HTTP response
+     * @return A fully fledged {@link JWTContext} object.
+     */
+    public JWTContext renew(HttpServletRequest request, HttpServletResponse response);
 
     /**
      * Renew tokens given in the {@link TokenContainer} object.
