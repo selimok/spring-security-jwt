@@ -7,5 +7,13 @@ package software.sandc.springframework.security.jwt.model;
  * @author selimok
  */
 public enum KeyType {
-    SYMMETRIC, ASYMMETRIC;
+    /**
+     * Symmetric key (private key only)
+     */
+    SYMMETRIC,
+    
+    /**
+     * Asymmetric key (private -public key pair)
+     */
+    ASYMMETRIC;
 }
