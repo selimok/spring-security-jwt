@@ -150,6 +150,9 @@ public class DefaultJWTService implements JWTService, InitializingBean {
      */
     @Override
     public JWTContext create(String principal, Parameters parameters) throws UserNotFoundException {
+        if(parameters == null){
+            parameters = new Parameters();
+        }
         String keyId = keyProvider.getCurrentSigningKeyId();
         String signingKey = keyProvider.getPrivateKey(keyId);
         SignatureAlgorithm signatureAlgorithm = keyProvider.getSignatureAlgorithm(keyId);
