@@ -476,8 +476,12 @@ public class DefaultJWTService implements JWTService, InitializingBean {
     }
 
     protected boolean isXSRFProtectionDisabled(Parameters parameters) {
-        Boolean isXSRFProtectionDisabled = parameters.getValueOf(DisableXSRFParameter.class);
-        return parameters != null && BooleanUtils.isTrue(isXSRFProtectionDisabled);
+        if(parameters != null){
+            Boolean isXSRFProtectionDisabled = parameters.getValueOf(DisableXSRFParameter.class);
+            return BooleanUtils.isTrue(isXSRFProtectionDisabled);
+        }else{
+            return false;
+        }
     }
 
 }

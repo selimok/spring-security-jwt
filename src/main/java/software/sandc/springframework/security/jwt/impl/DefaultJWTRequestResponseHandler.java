@@ -21,7 +21,7 @@ public class DefaultJWTRequestResponseHandler implements JWTRequestResponseHandl
     public static final String SPRING_SECURITY_JWT_RESPONSE_HEADER_JWT = "JWT-TOKEN";
 
     public static final String SPRING_SECURITY_JWT_REQUEST_HEADER_JWT_MODE_VALUE_WEB = "web";
-    public static final String SPRING_SECURITY_JWT_REQUEST_HEADER_JWT_MODE_VALUE_MOBILE = "mobile";
+    public static final String SPRING_SECURITY_JWT_REQUEST_HEADER_JWT_MODE_VALUE_APP = "app";
 
     private String jwtCookieParameter = SPRING_SECURITY_JWT_COOKIE_JWT_PARAMETER;
     private String jwtRequestHeaderParameter = SPRING_SECURITY_JWT_REQUEST_HEADER_JWT;
@@ -45,7 +45,7 @@ public class DefaultJWTRequestResponseHandler implements JWTRequestResponseHandl
 
     @Override
     public Parameters getParametersFromRequest(HttpServletRequest request) {
-        if (isJWTRequestedInMobileMode(request)) {
+        if (isJWTRequestedInAppMode(request)) {
             return new Parameters(new DisableXSRFParameter(true));
         }
         return null;
@@ -57,7 +57,7 @@ public class DefaultJWTRequestResponseHandler implements JWTRequestResponseHandl
 
         String jwtToken = tokenContainer.getJwtToken();
         
-        if (isJWTRequestedInMobileMode(request)) {
+        if (isJWTRequestedInAppMode(request)) {
             response.setHeader(jwtResponseHeaderParameter, jwtToken);
             
         } else {
@@ -113,7 +113,7 @@ public class DefaultJWTRequestResponseHandler implements JWTRequestResponseHandl
 
     protected String getJWTTokenFromRequest(HttpServletRequest request) {
         String jwtToken = null;
-        if (isJWTRequestedInMobileMode(request)) {
+        if (isJWTRequestedInAppMode(request)) {
             jwtToken = getJWTTokenFromHeader(request);
         } else {
             jwtToken = getJWTTokenFromCookie(request);
@@ -139,8 +139,8 @@ public class DefaultJWTRequestResponseHandler implements JWTRequestResponseHandl
         return request.getHeader(xsrfRequestHeaderParameter);
     }
 
-    private boolean isJWTRequestedInMobileMode(HttpServletRequest request) {
+    private boolean isJWTRequestedInAppMode(HttpServletRequest request) {
         String jwtMode = request.getHeader(jwtModeRequestHeaderParameter);
-        return SPRING_SECURITY_JWT_REQUEST_HEADER_JWT_MODE_VALUE_MOBILE.equals(jwtMode);
+        return SPRING_SECURITY_JWT_REQUEST_HEADER_JWT_MODE_VALUE_APP.equals(jwtMode);
     }
 }
