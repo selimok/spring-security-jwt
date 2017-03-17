@@ -15,6 +15,7 @@ public class DefaultJWTRequestResponseHandler implements JWTRequestResponseHandl
 
     public static final String SPRING_SECURITY_JWT_COOKIE_JWT_PARAMETER = "JWT-TOKEN";
     public static final String SPRING_SECURITY_JWT_COOKIE_XSRF_PARAMETER = "XSRF-TOKEN";
+    public static final String SPRING_SECURITY_JWT_RESPONSE_HEADER_XSRF = "XSRF-TOKEN";
     public static final String SPRING_SECURITY_JWT_REQUEST_HEADER_XSRF = "X-XSRF-TOKEN";
     public static final String SPRING_SECURITY_JWT_REQUEST_HEADER_JWT = "X-JWT-TOKEN";
     public static final String SPRING_SECURITY_JWT_REQUEST_HEADER_JWT_MODE = "X-JWT-MODE";
@@ -23,14 +24,15 @@ public class DefaultJWTRequestResponseHandler implements JWTRequestResponseHandl
     public static final String SPRING_SECURITY_JWT_REQUEST_HEADER_JWT_MODE_VALUE_WEB = "web";
     public static final String SPRING_SECURITY_JWT_REQUEST_HEADER_JWT_MODE_VALUE_APP = "app";
 
-    private String jwtCookieParameter = SPRING_SECURITY_JWT_COOKIE_JWT_PARAMETER;
-    private String jwtRequestHeaderParameter = SPRING_SECURITY_JWT_REQUEST_HEADER_JWT;
-    private String jwtResponseHeaderParameter = SPRING_SECURITY_JWT_RESPONSE_HEADER_JWT;
-    private String jwtModeRequestHeaderParameter = SPRING_SECURITY_JWT_REQUEST_HEADER_JWT_MODE;
-    private String xsrfCookieParameter = SPRING_SECURITY_JWT_COOKIE_XSRF_PARAMETER;
-    private String xsrfRequestHeaderParameter = SPRING_SECURITY_JWT_REQUEST_HEADER_XSRF;
-    private String cookiePath = "/";
-    private boolean secureCookie = false;
+    protected String jwtCookieParameter = SPRING_SECURITY_JWT_COOKIE_JWT_PARAMETER;
+    protected String jwtRequestHeaderParameter = SPRING_SECURITY_JWT_REQUEST_HEADER_JWT;
+    protected String jwtResponseHeaderParameter = SPRING_SECURITY_JWT_RESPONSE_HEADER_JWT;
+    protected String jwtModeRequestHeaderParameter = SPRING_SECURITY_JWT_REQUEST_HEADER_JWT_MODE;
+    protected String xsrfCookieParameter = SPRING_SECURITY_JWT_COOKIE_XSRF_PARAMETER;
+    protected String xsrfResponseHeaderParameter = SPRING_SECURITY_JWT_RESPONSE_HEADER_XSRF;
+    protected String xsrfRequestHeaderParameter = SPRING_SECURITY_JWT_REQUEST_HEADER_XSRF;
+    protected String cookiePath = "/";
+    protected boolean secureCookie = false;
 
     @Override
     public TokenContainer getTokenFromRequest(HttpServletRequest request) {
@@ -69,10 +71,12 @@ public class DefaultJWTRequestResponseHandler implements JWTRequestResponseHandl
             jwtTokenCookie.setSecure(secureCookie);
             jwtTokenCookie.setPath(cookiePath);
 
-            Cookie xsrfTokenCookie = new Cookie(xsrfCookieParameter, tokenContainer.getXsrfToken());
+            String xsrfToken = tokenContainer.getXsrfToken();
+            Cookie xsrfTokenCookie = new Cookie(xsrfCookieParameter, xsrfToken);
             xsrfTokenCookie.setSecure(secureCookie);
             xsrfTokenCookie.setPath(cookiePath);
-
+            response.setHeader(xsrfResponseHeaderParameter, xsrfToken);
+            
             response.addCookie(jwtTokenCookie);
             response.addCookie(xsrfTokenCookie);
         }
@@ -93,6 +97,10 @@ public class DefaultJWTRequestResponseHandler implements JWTRequestResponseHandl
 
     public void setJwtResponseHeaderParameter(String jwtResponseHeaderParameter) {
         this.jwtResponseHeaderParameter = jwtResponseHeaderParameter;
+    }
+    
+    public void setXsrfResponseHeaderParameter(String xsrfResponseHeaderParameter) {
+        this.xsrfResponseHeaderParameter = xsrfResponseHeaderParameter;
     }
 
     public void setXsrfCookieParameter(String xsrfCookieParameter) {
@@ -139,7 +147,7 @@ public class DefaultJWTRequestResponseHandler implements JWTRequestResponseHandl
         return request.getHeader(xsrfRequestHeaderParameter);
     }
 
-    private boolean isJWTRequestedInAppMode(HttpServletRequest request) {
+    protected boolean isJWTRequestedInAppMode(HttpServletRequest request) {
         String jwtMode = request.getHeader(jwtModeRequestHeaderParameter);
         return SPRING_SECURITY_JWT_REQUEST_HEADER_JWT_MODE_VALUE_APP.equals(jwtMode);
     }
