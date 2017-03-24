@@ -1,4 +1,4 @@
-package software.sandc.springframework.security.jwt.impl;
+package software.sandc.springframework.security.jwt.impl.authority;
 
 import java.io.IOException;
 
@@ -14,23 +14,23 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.util.Assert;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import software.sandc.springframework.security.jwt.JWTService;
+import software.sandc.springframework.security.jwt.consumer.JWTConsumer;
 import software.sandc.springframework.security.jwt.model.JWTContext;
 
 public class JWTAuthenticationFilter extends OncePerRequestFilter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JWTAuthenticationFilter.class);
 
-    protected final JWTService jwtService;
+    protected final JWTConsumer jwtConsumer;
 
-    public JWTAuthenticationFilter(JWTService jwtService) {
-        this.jwtService = jwtService;
+    public JWTAuthenticationFilter(JWTConsumer jwtConsumer) {
+        this.jwtConsumer = jwtConsumer;
     }
 
     @Override
     public void afterPropertiesSet() throws ServletException {
         super.afterPropertiesSet();
-        Assert.notNull(this.jwtService, "jwtService must be specified");
+        Assert.notNull(this.jwtConsumer, "jwtService must be specified");
     }
 
     @Override
@@ -49,7 +49,7 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
     protected Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
             throws AuthenticationException {
         Authentication authentication = null;
-        JWTContext jwtContext = jwtService.authenticateJWTRequest(request, response);
+        JWTContext jwtContext = jwtConsumer.authenticateJWTRequest(request, response);
         if (jwtContext != null) {
             authentication = jwtContext.getAuthentication();
         }

@@ -14,7 +14,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.SigningKeyResolverAdapter;
 import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.impl.TextCodec;
-import software.sandc.springframework.security.jwt.KeyProvider;
+import software.sandc.springframework.security.jwt.consumer.KeyProvider;
 import software.sandc.springframework.security.jwt.model.KeyType;
 import software.sandc.springframework.security.jwt.util.RSAUtils;
 

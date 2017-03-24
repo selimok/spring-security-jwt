@@ -41,7 +41,8 @@ public class DefaultJWTRequestResponseHandler implements JWTRequestResponseHandl
             return null;
         } else {
             String xsrfToken = getXSRFTokenFromHeader(request);
-            return new TokenContainer(jwtToken, xsrfToken);
+            String jwtMode = getJWTModeFromHeader(request);
+            return new TokenContainer(jwtMode, jwtToken, xsrfToken);
         }
     }
 
@@ -147,8 +148,18 @@ public class DefaultJWTRequestResponseHandler implements JWTRequestResponseHandl
         return request.getHeader(xsrfRequestHeaderParameter);
     }
 
-    protected boolean isJWTRequestedInAppMode(HttpServletRequest request) {
+    protected String getJWTModeFromHeader(HttpServletRequest request) {
         String jwtMode = request.getHeader(jwtModeRequestHeaderParameter);
+        if(SPRING_SECURITY_JWT_REQUEST_HEADER_JWT_MODE_VALUE_APP.equals(jwtMode)){
+            return jwtMode;
+        }else{            
+            return SPRING_SECURITY_JWT_REQUEST_HEADER_JWT_MODE_VALUE_WEB;
+        }
+    }
+
+    protected boolean isJWTRequestedInAppMode(HttpServletRequest request) {
+        String jwtMode = getJWTModeFromHeader(request);
         return SPRING_SECURITY_JWT_REQUEST_HEADER_JWT_MODE_VALUE_APP.equals(jwtMode);
     }
+
 }

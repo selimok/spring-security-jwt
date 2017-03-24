@@ -20,6 +20,13 @@ public class JWTAuthentication extends AbstractAuthenticationToken {
     private final String principal;
 
     private final String sessionId;
+    
+    // Private constructor for serialization
+    private JWTAuthentication(){
+        super(null);
+        this.sessionId = null;
+        this.principal = null;
+    }
 
     /**
      * Create a {@link JWTAuthentication} instance for a specific user

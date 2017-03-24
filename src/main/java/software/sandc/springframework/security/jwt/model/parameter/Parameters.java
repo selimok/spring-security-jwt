@@ -3,6 +3,13 @@ package software.sandc.springframework.security.jwt.model.parameter;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Additional parameters to customize processing of the request. Possible parameters and their effects may differ
+ * depending on specific implementation.
+ * 
+ * @author selimok
+ *
+ */
 @SuppressWarnings("rawtypes")
 public class Parameters {
 
@@ -26,8 +33,8 @@ public class Parameters {
     }
 
     /**
-     * Merge given parameters into existing parameters. Given parameters
-     * overwrites existing parameters, if their keys are equal.
+     * Merge given parameters into existing parameters. Given parameters overwrites existing parameters, if their keys
+     * are equal.
      * 
      * @param parametersToMerge
      *            {@link Parameters} to merge.

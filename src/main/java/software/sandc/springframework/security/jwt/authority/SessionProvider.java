@@ -1,4 +1,4 @@
-package software.sandc.springframework.security.jwt;
+package software.sandc.springframework.security.jwt.authority;
 
 /**
  * {@link SessionProvider} is used only if a JWT token is linked to a session to

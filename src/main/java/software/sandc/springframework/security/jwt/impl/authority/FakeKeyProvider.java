@@ -1,12 +1,12 @@
-package software.sandc.springframework.security.jwt.impl;
+package software.sandc.springframework.security.jwt.impl.authority;
 
 import java.util.UUID;
 
 import io.jsonwebtoken.SignatureAlgorithm;
-import software.sandc.springframework.security.jwt.KeyProvider;
+import software.sandc.springframework.security.jwt.authority.AuthorityKeyProvider;
 import software.sandc.springframework.security.jwt.model.KeyType;
 
-public class FakeKeyProvider implements KeyProvider {
+public class FakeKeyProvider implements AuthorityKeyProvider {
 
     private final String privateKey;
 

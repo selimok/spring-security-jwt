@@ -1,8 +1,8 @@
-package software.sandc.springframework.security.jwt.impl;
+package software.sandc.springframework.security.jwt.impl.authority;
 
 import java.util.UUID;
 
-import software.sandc.springframework.security.jwt.SessionProvider;
+import software.sandc.springframework.security.jwt.authority.SessionProvider;
 
 public class FakeSessionProvider implements SessionProvider {
 

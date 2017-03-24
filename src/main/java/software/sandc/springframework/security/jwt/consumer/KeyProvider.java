@@ -1,6 +1,5 @@
-package software.sandc.springframework.security.jwt;
+package software.sandc.springframework.security.jwt.consumer;
 
-import io.jsonwebtoken.SignatureAlgorithm;
 import software.sandc.springframework.security.jwt.model.KeyType;
 
 /**
@@ -11,14 +10,6 @@ import software.sandc.springframework.security.jwt.model.KeyType;
  *
  */
 public interface KeyProvider {
-
-    /**
-     * Get current key id for signing JWT token. Key id is used for resolving
-     * key type and signing keys while creating or validating a JWT token.
-     * 
-     * @return non-null, non-empty key id.
-     */
-    String getCurrentSigningKeyId();
 
     /**
      * Get private key for given key id. If the key type is symmetric, this
@@ -50,12 +41,4 @@ public interface KeyProvider {
      */
     KeyType getKeyType(String keyId);
 
-    /**
-     * Get the signature algorithm of the related key.
-     * 
-     * @param keyId
-     *            Unique id of the related key.
-     * @return A {@link SignatureAlgorithm} value.
-     */
-    SignatureAlgorithm getSignatureAlgorithm(String keyId);
 }

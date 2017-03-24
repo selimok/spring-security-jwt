@@ -1,13 +1,14 @@
 package software.sandc.springframework.security.jwt.model;
 
 /**
- * {@link TokenContainer} is a container class for JWT and XSRF tokens. A
- * {@link TokenContainer} must at least contain a non-empty JWT token value.
+ * {@link TokenContainer} is a container class for JWT and XSRF tokens. A {@link TokenContainer} must at least contain a
+ * non-empty JWT token value.
  * 
  * @author selimok
  */
 public class TokenContainer {
 
+    private String jwtMode;
     private String jwtToken;
     private String xsrfToken;
 
@@ -17,7 +18,8 @@ public class TokenContainer {
      * @param jwtToken
      *            JWT token value as String.
      */
-    public TokenContainer(String jwtToken) {
+    public TokenContainer(String jwtMode, String jwtToken) {
+        this.jwtMode = jwtMode;
         this.jwtToken = jwtToken;
     }
 
@@ -29,9 +31,19 @@ public class TokenContainer {
      * @param xsrfToken
      *            XSRF token value as String.
      */
-    public TokenContainer(String jwtToken, String xsrfToken) {
+    public TokenContainer(String jwtMode, String jwtToken, String xsrfToken) {
+        this.jwtMode = jwtMode;
         this.jwtToken = jwtToken;
         this.xsrfToken = xsrfToken;
+    }
+
+    /**
+     * Get JWT mode.
+     * 
+     * @return JWT mode value as String.
+     */
+    public String getJwtMode() {
+        return jwtMode;
     }
 
     /**
@@ -56,6 +68,7 @@ public class TokenContainer {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
+        result = prime * result + ((jwtMode == null) ? 0 : jwtMode.hashCode());
         result = prime * result + ((jwtToken == null) ? 0 : jwtToken.hashCode());
         result = prime * result + ((xsrfToken == null) ? 0 : xsrfToken.hashCode());
         return result;
@@ -70,6 +83,11 @@ public class TokenContainer {
         if (getClass() != obj.getClass())
             return false;
         TokenContainer other = (TokenContainer) obj;
+        if (jwtMode == null) {
+            if (other.jwtMode != null)
+                return false;
+        } else if (!jwtMode.equals(other.jwtMode))
+            return false;
         if (jwtToken == null) {
             if (other.jwtToken != null)
                 return false;
@@ -85,7 +103,7 @@ public class TokenContainer {
 
     @Override
     public String toString() {
-        return "TokenContainer [jwtToken=" + jwtToken + ", xsrfToken=" + xsrfToken + "]";
+        return "TokenContainer [jwtMode=" + jwtMode + ", jwtToken=" + jwtToken + ", xsrfToken=" + xsrfToken + "]";
     }
 
 }
