@@ -1,5 +1,15 @@
 package software.sandc.springframework.security.jwt.impl.authority;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
+import io.jsonwebtoken.JwsHeader;
+import io.jsonwebtoken.JwtBuilder;
+import io.jsonwebtoken.JwtParser;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.UnsupportedJwtException;
+import io.jsonwebtoken.impl.TextCodec;
+
 import java.security.PrivateKey;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -22,15 +32,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.util.Assert;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
-import io.jsonwebtoken.JwsHeader;
-import io.jsonwebtoken.JwtBuilder;
-import io.jsonwebtoken.JwtParser;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.UnsupportedJwtException;
-import io.jsonwebtoken.impl.TextCodec;
 import software.sandc.springframework.security.jwt.authority.AuthorityKeyProvider;
 import software.sandc.springframework.security.jwt.authority.JWTAuthority;
 import software.sandc.springframework.security.jwt.authority.SessionProvider;
@@ -96,7 +97,6 @@ public class DefaultJWTAuthority extends DefaultJWTConsumer implements JWTAuthor
         if (principal != null && password != null) {
             UserDetails userDetails = userDetailsService.loadUserByUsername(principal);
             if (passwordEncoder.matches(password, userDetails.getPassword())) {
-                TokenContainer tokenContainer = jwtRequestResponseHandler.getTokenFromRequest(request);
                 Parameters parameters = jwtRequestResponseHandler.getParametersFromRequest(request);
                 jwtContext = create(principal, parameters);
                 handleJWTContext(request, response, jwtContext);
@@ -135,7 +135,7 @@ public class DefaultJWTAuthority extends DefaultJWTConsumer implements JWTAuthor
      */
     @Override
     public JWTContext create(String principal, Parameters parameters) throws UserNotFoundException {
-        if(parameters == null){
+        if (parameters == null) {
             parameters = new Parameters();
         }
         String keyId = authorityKeyProvider.getCurrentSigningKeyId();
@@ -184,7 +184,7 @@ public class DefaultJWTAuthority extends DefaultJWTConsumer implements JWTAuthor
 
         String jwtToken = jwtBuilder.compact();
         String jwtMode = getJWTModeFromParameters(parameters);
-        JWTContext jwtContext = createJWTContext(principal, sessionId, xsrfToken, authorities,jwtMode, jwtToken);
+        JWTContext jwtContext = createJWTContext(principal, sessionId, xsrfToken, authorities, jwtMode, jwtToken);
         return jwtContext;
     }
 
@@ -229,8 +229,6 @@ public class DefaultJWTAuthority extends DefaultJWTConsumer implements JWTAuthor
             throw new InvalidSessionException("Token session does not exist or not valid anymore.");
         }
     }
-
-
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -283,7 +281,6 @@ public class DefaultJWTAuthority extends DefaultJWTConsumer implements JWTAuthor
         this.authorityKeyProvider = authorityKeyProvider;
     }
 
-
     /**
      * Set {@link UserDetailsChecker} which will be used to validate the loaded
      * <tt>UserDetails</tt> object.
@@ -326,15 +323,9 @@ public class DefaultJWTAuthority extends DefaultJWTConsumer implements JWTAuthor
         this.passwordEncoder = passwordEncoder;
     }
 
-    
-
-
-
     protected String generateXSRFToken() {
         return UUID.randomUUID().toString();
     }
-
-    
 
     protected String convertToString(Collection<? extends GrantedAuthority> authorities) {
         List<String> authoriesAsStringList = getAuthorityListAsString(authorities);
@@ -377,12 +368,11 @@ public class DefaultJWTAuthority extends DefaultJWTConsumer implements JWTAuthor
         }
     }
 
-  
     protected boolean isXSRFProtectionDisabled(Parameters parameters) {
-        if(parameters != null){
+        if (parameters != null) {
             Boolean isXSRFProtectionDisabled = parameters.getValueOf(DisableXSRFParameter.class);
             return BooleanUtils.isTrue(isXSRFProtectionDisabled);
-        }else{
+        } else {
             return false;
         }
     }

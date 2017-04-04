@@ -13,6 +13,13 @@ public class InvalidTokenException extends AuthenticationException {
     private static final long serialVersionUID = 1L;
 
     /**
+     * Constructs an empty {@link InvalidTokenException}.
+     */
+    public InvalidTokenException() {
+        super(null);
+    }
+    
+    /**
      * Constructs a {@link InvalidTokenException} with the specified message.
      *
      * @param msg

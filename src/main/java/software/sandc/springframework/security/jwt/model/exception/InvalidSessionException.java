@@ -13,6 +13,13 @@ public class InvalidSessionException extends AuthenticationException {
     private static final long serialVersionUID = 1L;
 
     /**
+     * Constructs an empty {@link InvalidSessionException}.
+     */
+    public InvalidSessionException() {
+        super(null);
+    }
+
+    /**
      * Constructs a {@link InvalidSessionException} with the specified message.
      *
      * @param msg

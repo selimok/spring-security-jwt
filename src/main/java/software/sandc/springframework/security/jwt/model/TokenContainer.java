@@ -1,16 +1,26 @@
 package software.sandc.springframework.security.jwt.model;
 
+import java.io.Serializable;
+
 /**
  * {@link TokenContainer} is a container class for JWT and XSRF tokens. A {@link TokenContainer} must at least contain a
  * non-empty JWT token value.
  * 
  * @author selimok
  */
-public class TokenContainer {
+public class TokenContainer implements Serializable{
 
+    private static final long serialVersionUID = 1L;
     private String jwtMode;
     private String jwtToken;
     private String xsrfToken;
+    
+    /**
+     * Constructor for serialization only, DO NOT USE!
+     */
+    @SuppressWarnings("unused")
+    private TokenContainer(){
+    }
 
     /**
      * Create a {@link TokenContainer} instance with given JWT token.

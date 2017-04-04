@@ -6,6 +6,8 @@ import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.SpringSecurityCoreVersion;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
 /**
  * {@link JWTAuthentication} is a sub class {@link AbstractAuthenticationToken}.
  * This class contains authentication related data which processed by spring
@@ -13,6 +15,7 @@ import org.springframework.security.core.SpringSecurityCoreVersion;
  * 
  * @author selimok
  */
+@JsonDeserialize(using = JWTAuthenticationSerializer.class)
 public class JWTAuthentication extends AbstractAuthenticationToken {
 
     private static final long serialVersionUID = SpringSecurityCoreVersion.SERIAL_VERSION_UID;
@@ -20,9 +23,11 @@ public class JWTAuthentication extends AbstractAuthenticationToken {
     private final String principal;
 
     private final String sessionId;
-    
-    // Private constructor for serialization
-    private JWTAuthentication(){
+
+    /**
+     * Constructor for serialization only, DO NOT USE!
+     */
+    private JWTAuthentication() {
         super(null);
         this.sessionId = null;
         this.principal = null;
@@ -85,6 +90,11 @@ public class JWTAuthentication extends AbstractAuthenticationToken {
         return this.principal;
     }
 
+    /**
+     * Get session id (if exists)
+     * 
+     * @return Session id as String.
+     */
     public String getSessionId() {
         return this.sessionId;
     }
