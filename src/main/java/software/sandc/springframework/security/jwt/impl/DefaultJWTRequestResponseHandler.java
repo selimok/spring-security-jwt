@@ -53,7 +53,7 @@ public class DefaultJWTRequestResponseHandler implements JWTRequestResponseHandl
         }
         return null;
     }
-
+    
     @Override
     public void putTokenToResponse(HttpServletRequest request, HttpServletResponse response,
             TokenContainer tokenContainer) {
@@ -159,6 +159,10 @@ public class DefaultJWTRequestResponseHandler implements JWTRequestResponseHandl
 
     protected boolean isJWTRequestedInAppMode(HttpServletRequest request) {
         String jwtMode = getJWTModeFromHeader(request);
+        return istJWTInAppMode(jwtMode);
+    }
+
+    protected boolean istJWTInAppMode(String jwtMode) {
         return SPRING_SECURITY_JWT_REQUEST_HEADER_JWT_MODE_VALUE_APP.equals(jwtMode);
     }
 
