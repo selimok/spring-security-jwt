@@ -199,9 +199,6 @@ public class DefaultJWTAuthority extends DefaultJWTConsumer implements JWTAuthor
         if (tokenContainer != null) {
             Parameters parameters = jwtRequestResponseHandler.getParametersFromRequest(request);
             jwtContext = renew(tokenContainer, parameters);
-            if(refreshSessionOnRenewal){
-                refreshSession(jwtContext);                
-            }
             handleJWTContext(request, response, jwtContext);
         }
         return jwtContext;
@@ -230,6 +227,9 @@ public class DefaultJWTAuthority extends DefaultJWTConsumer implements JWTAuthor
             String renewedSessionId = sessionProvider.renewSession(sessionId);
             renewParameters.put(new SessionIdParameter(renewedSessionId));
             JWTContext jwtContext = create(principal, parameters);
+            if(refreshSessionOnRenewal){
+                refreshSession(jwtContext);                
+            }
             return jwtContext;
         } else {
             throw new InvalidSessionException("Token session does not exist or not valid anymore.");
