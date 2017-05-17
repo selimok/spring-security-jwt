@@ -10,9 +10,9 @@ import software.sandc.springframework.security.jwt.model.JWTAuthentication;
 
 public class JWTAuthenticationUtil {
 
-    public static String getCurrentUserId(){
+    public static String getCurrentPrincipal(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if(authentication != null){            
+        if(authentication != null){
             Object principal = authentication.getPrincipal();
             if(principal != null){
                 return String.valueOf(principal);
