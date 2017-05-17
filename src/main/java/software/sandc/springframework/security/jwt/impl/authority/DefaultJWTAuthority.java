@@ -63,6 +63,8 @@ public class DefaultJWTAuthority extends DefaultJWTConsumer implements JWTAuthor
     protected int sessionInvalidationDelayInMinutes = 5;
     protected PasswordEncoder passwordEncoder;
     protected AuthorityKeyProvider authorityKeyProvider;
+    protected boolean refreshSessionOnAuthentication = false;
+    protected boolean refreshSessionOnRenewal = true;
 
     public DefaultJWTAuthority(UserDetailsService userDetailsService) {
         this.userDetailsService = userDetailsService;
@@ -82,7 +84,9 @@ public class DefaultJWTAuthority extends DefaultJWTConsumer implements JWTAuthor
                     jwtContext = renew(tokenContainer, parameters);
                 }
             }
-            refreshSession(jwtContext);
+            if (refreshSessionOnAuthentication) {
+                refreshSession(jwtContext);
+            }
             handleJWTContext(request, response, jwtContext);
         }
         return jwtContext;
@@ -195,7 +199,9 @@ public class DefaultJWTAuthority extends DefaultJWTConsumer implements JWTAuthor
         if (tokenContainer != null) {
             Parameters parameters = jwtRequestResponseHandler.getParametersFromRequest(request);
             jwtContext = renew(tokenContainer, parameters);
-            refreshSession(jwtContext);
+            if(refreshSessionOnRenewal){
+                refreshSession(jwtContext);                
+            }
             handleJWTContext(request, response, jwtContext);
         }
         return jwtContext;
@@ -321,6 +327,33 @@ public class DefaultJWTAuthority extends DefaultJWTConsumer implements JWTAuthor
      */
     public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
         this.passwordEncoder = passwordEncoder;
+    }
+
+    /**
+     * Refresh related session on each JWT authentication step. If you enable
+     * this, you can track user activity (by saving last touch date and other
+     * user related data) more precisely but this may cause increased database
+     * overhead. <br>
+     * <br>
+     * Default value is <b>false</b>
+     * 
+     * @param refreshSessionOnAuthentication
+     */
+    public void setRefreshSessionOnAuthentication(boolean refreshSessionOnAuthentication) {
+        this.refreshSessionOnAuthentication = refreshSessionOnAuthentication;
+    }
+    
+    /**
+     * Refresh related session on each JWT renewal. If you disable
+     * this, you cannot track user activity (by saving last touch date and other
+     * user related data) via user sessions.<br>
+     * <br>
+     * Default value is <b>true</b>
+     * 
+     * @param refreshSessionOnRenewal
+     */
+    public void setRefreshSessionOnRenewal(boolean refreshSessionOnRenewal) {
+        this.refreshSessionOnRenewal = refreshSessionOnRenewal;
     }
 
     protected String generateXSRFToken() {
