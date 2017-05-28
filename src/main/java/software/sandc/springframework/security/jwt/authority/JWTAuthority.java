@@ -1,15 +1,5 @@
 package software.sandc.springframework.security.jwt.authority;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
-import io.jsonwebtoken.JwsHeader;
-import io.jsonwebtoken.JwtBuilder;
-import io.jsonwebtoken.JwtParser;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.UnsupportedJwtException;
-import io.jsonwebtoken.impl.TextCodec;
-
 import java.security.PrivateKey;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -20,6 +10,8 @@ import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.security.authentication.AccountStatusUserDetailsChecker;
 import org.springframework.security.core.GrantedAuthority;
@@ -32,8 +24,16 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.util.Assert;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
+import io.jsonwebtoken.JwsHeader;
+import io.jsonwebtoken.JwtBuilder;
+import io.jsonwebtoken.JwtParser;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.UnsupportedJwtException;
+import io.jsonwebtoken.impl.TextCodec;
 import software.sandc.springframework.security.jwt.JWTRequestResponseHandler;
-import software.sandc.springframework.security.jwt.authority.JWTAuthority;
 import software.sandc.springframework.security.jwt.consumer.JWTConsumer;
 import software.sandc.springframework.security.jwt.impl.DefaultSigningKeyResolver;
 import software.sandc.springframework.security.jwt.impl.authority.FakeKeyProvider;
@@ -55,6 +55,8 @@ import software.sandc.springframework.security.jwt.util.RSAUtils;
 import software.sandc.springframework.security.jwt.util.StringUtils;
 
 public class JWTAuthority extends JWTConsumer implements InitializingBean {
+    
+    private static final Logger LOGGER = LoggerFactory.getLogger(JWTAuthority.class);
 
     protected UserDetailsService userDetailsService;
     protected SessionProvider sessionProvider;
@@ -142,7 +144,10 @@ public class JWTAuthority extends JWTConsumer implements InitializingBean {
         Date sessionExpiry = new Date(System.currentTimeMillis() + (tokenLifetimeInSeconds * 1000));
         String xsrfToken = null;
         if (!isXSRFProtectionDisabled(parameters)) {
+            LOGGER.trace("XSRF protection is enabled. Creating XSRF Token.");
             xsrfToken = generateXSRFToken();
+        }else{
+            LOGGER.trace("XSRF protection is disabled. Skipping XSRF Token generation");
         }
         UserDetails userDetails = getUserDetails(principal);
         Collection<? extends GrantedAuthority> authorities = userDetails.getAuthorities();
