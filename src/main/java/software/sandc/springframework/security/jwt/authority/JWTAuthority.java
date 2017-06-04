@@ -55,7 +55,7 @@ import software.sandc.springframework.security.jwt.util.RSAUtils;
 import software.sandc.springframework.security.jwt.util.StringUtils;
 
 public class JWTAuthority extends JWTConsumer implements InitializingBean {
-    
+
     private static final Logger LOGGER = LoggerFactory.getLogger(JWTAuthority.class);
 
     protected UserDetailsService userDetailsService;
@@ -126,13 +126,35 @@ public class JWTAuthority extends JWTConsumer implements InitializingBean {
     }
 
     /**
-     * Creates {@link JWTContext} for given principal. A {@link JWTContext}
-     * contains all relevant tokens (like JWT or XSRF Tokens) and
-     * {@link JWTAuthentication} object, which is relevant for Spring-Security.
+     * This method can be used to overwrite existing valid token on the client side. Please be aware that, there is no
+     * guarantee to overwrite existing token in app mode on the client side.
+     * 
+     * @param request
+     *            {@link HttpServletRequest} object
+     * @param response
+     *            {@link HttpServletResponse} object
+     * @return An invalid {@link JWTContext} object.
+     */
+    public JWTContext createAndAttachInvalidToken(HttpServletRequest request, HttpServletResponse response) {
+
+        String randomUUID = UUID.randomUUID().toString();
+        Date now = new Date();
+        JwtBuilder jwtBuilder = Jwts.builder().setHeaderParam(JwsHeader.KEY_ID, randomUUID).setSubject(randomUUID)
+                .setIssuedAt(now).setExpiration(now);
+        String jwtToken = jwtBuilder.compact();
+        Parameters parameters = jwtRequestResponseHandler.getParametersFromRequest(request);
+        String jwtMode = getJWTModeFromParameters(parameters);
+        JWTContext jwtContext = createJWTContext(randomUUID, randomUUID, randomUUID, null, jwtMode, jwtToken);
+        handleJWTContext(request, response, jwtContext);
+        return jwtContext;
+    }
+
+    /**
+     * Creates {@link JWTContext} for given principal. A {@link JWTContext} contains all relevant tokens (like JWT or
+     * XSRF Tokens) and {@link JWTAuthentication} object, which is relevant for Spring-Security.
      * 
      * @param principal
-     *            Unique user identifier. This can be the user name or user id
-     *            according to underlying implementation.
+     *            Unique user identifier. This can be the user name or user id according to underlying implementation.
      * @return Fully fledged {@link JWTContext} object.
      * @throws UserNotFoundException
      *             if the user identified with given principal cannot be found.
@@ -150,7 +172,7 @@ public class JWTAuthority extends JWTConsumer implements InitializingBean {
         if (!isXSRFProtectionDisabled(parameters)) {
             LOGGER.trace("XSRF protection is enabled. Creating XSRF Token.");
             xsrfToken = generateXSRFToken();
-        }else{
+        } else {
             LOGGER.trace("XSRF protection is disabled. Skipping XSRF Token generation");
         }
         UserDetails userDetails = getUserDetails(principal);
@@ -200,8 +222,8 @@ public class JWTAuthority extends JWTConsumer implements InitializingBean {
         if (tokenContainer != null) {
             Parameters parameters = jwtRequestResponseHandler.getParametersFromRequest(request);
             jwtContext = renew(tokenContainer, parameters);
-            if(refreshSessionOnRenewal){
-                refreshSession(jwtContext);                
+            if (refreshSessionOnRenewal) {
+                refreshSession(jwtContext);
             }
             handleJWTContext(request, response, jwtContext);
         }
@@ -288,8 +310,7 @@ public class JWTAuthority extends JWTConsumer implements InitializingBean {
     }
 
     /**
-     * Set {@link UserDetailsChecker} which will be used to validate the loaded
-     * <tt>UserDetails</tt> object.
+     * Set {@link UserDetailsChecker} which will be used to validate the loaded <tt>UserDetails</tt> object.
      * 
      * @param userDetailsChecker
      *            An instance of user details checker implementation.
@@ -328,7 +349,7 @@ public class JWTAuthority extends JWTConsumer implements InitializingBean {
     public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
         this.passwordEncoder = passwordEncoder;
     }
-    
+
     public SessionProvider getSessionProvider() {
         return sessionProvider;
     }
@@ -352,11 +373,10 @@ public class JWTAuthority extends JWTConsumer implements InitializingBean {
     public AuthorityKeyProvider getAuthorityKeyProvider() {
         return authorityKeyProvider;
     }
-    
+
     /**
-     * Refresh related session on each JWT authentication step. If you enable
-     * this, you can track user activity (by saving last touch date and other
-     * user related data) more precisely but this may cause increased database
+     * Refresh related session on each JWT authentication step. If you enable this, you can track user activity (by
+     * saving last touch date and other user related data) more precisely but this may cause increased database
      * overhead. <br>
      * <br>
      * Default value is <b>false</b>
@@ -366,11 +386,10 @@ public class JWTAuthority extends JWTConsumer implements InitializingBean {
     public void setRefreshSessionOnAuthentication(boolean refreshSessionOnAuthentication) {
         this.refreshSessionOnAuthentication = refreshSessionOnAuthentication;
     }
-    
+
     /**
-     * Refresh related session on each JWT renewal. If you disable
-     * this, you cannot track user activity (by saving last touch date and other
-     * user related data) via user sessions.<br>
+     * Refresh related session on each JWT renewal. If you disable this, you cannot track user activity (by saving last
+     * touch date and other user related data) via user sessions.<br>
      * <br>
      * Default value is <b>true</b>
      * 
@@ -379,7 +398,6 @@ public class JWTAuthority extends JWTConsumer implements InitializingBean {
     public void setRefreshSessionOnRenewal(boolean refreshSessionOnRenewal) {
         this.refreshSessionOnRenewal = refreshSessionOnRenewal;
     }
-
 
     protected String generateXSRFToken() {
         return UUID.randomUUID().toString();
