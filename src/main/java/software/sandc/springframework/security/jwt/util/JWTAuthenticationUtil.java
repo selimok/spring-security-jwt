@@ -10,29 +10,47 @@ import software.sandc.springframework.security.jwt.model.JWTAuthentication;
 
 public class JWTAuthenticationUtil {
 
-    public static String getCurrentUserId(){
+    /**
+     * Get user id if the user authenticated.
+     * 
+     * @return Unique user id (principal) if the user authenticated with a valid JWT Token
+     *         (non-anonymous), null otherwise.
+     */
+    public static String getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if(authentication != null){            
+        if (authentication != null && authentication instanceof JWTAuthentication && authentication.isAuthenticated()) {
             Object principal = authentication.getPrincipal();
-            if(principal != null){
+            if (principal != null) {
                 return String.valueOf(principal);
             }
         }
         return null;
     }
-    
-    public static Collection<? extends GrantedAuthority> getCurrentUserAuthorities(){
+
+    /**
+     * Get authorities of the authenticated user.
+     * 
+     * @return Authorities of the current user if the user authenticated with a valid JWT Token
+     *         (non-anonymous), null otherwise.
+     */
+    public static Collection<? extends GrantedAuthority> getCurrentUserAuthorities() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if(authentication != null){            
-             return authentication.getAuthorities();
+        if (authentication != null && authentication instanceof JWTAuthentication && authentication.isAuthenticated()) {
+            return authentication.getAuthorities();
         }
         return null;
     }
-    
-    public static String getCurrentUserSessionId(){
+
+    /**
+     * Get session id of the JWT token if the user authenticated.
+     * 
+     * @return Session id if the user authenticated with a valid JWT Token and if the
+     *         token bound to a session.
+     */
+    public static String getCurrentUserSessionId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if(authentication != null && authentication instanceof JWTAuthentication){
-            JWTAuthentication jwtAuthentication = (JWTAuthentication)authentication;
+        if (authentication != null && authentication instanceof JWTAuthentication) {
+            JWTAuthentication jwtAuthentication = (JWTAuthentication) authentication;
             return jwtAuthentication.getSessionId();
         }
         return null;
