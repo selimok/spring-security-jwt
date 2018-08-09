@@ -39,7 +39,7 @@ import software.sandc.springframework.security.jwt.util.BooleanUtils;
 
 public class DefaultJWTConsumer implements JWTConsumer, InitializingBean  {
     
-    protected static final Integer TEN_YEARS_IN_SECONDS = 315360000;
+    protected static final long TEN_YEARS_IN_SECONDS = 315360000;
     
     public static final String SPRING_SECURITY_JWT_XSRF_PARAMETER_NAME = "xsrf-token";
     public static final String SPRING_SECURITY_JWT_SESSION_ID_PARAMETER_NAME = "jti";   

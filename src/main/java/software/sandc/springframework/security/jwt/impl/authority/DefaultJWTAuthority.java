@@ -59,8 +59,8 @@ public class DefaultJWTAuthority extends DefaultJWTConsumer implements JWTAuthor
     protected UserDetailsService userDetailsService;
     protected SessionProvider sessionProvider;
     protected UserDetailsChecker userDetailsChecker;
-    protected int tokenLifetimeInSeconds = 600;
-    protected int sessionInvalidationDelayInMinutes = 5;
+    protected long tokenLifetimeInSeconds = 600;
+    protected long sessionInvalidationDelayInMinutes = 5;
     protected PasswordEncoder passwordEncoder;
     protected AuthorityKeyProvider authorityKeyProvider;
     protected boolean refreshSessionOnAuthentication = false;
@@ -305,7 +305,7 @@ public class DefaultJWTAuthority extends DefaultJWTConsumer implements JWTAuthor
      * @param tokenLifetimeInSeconds
      *            Token lifetime in seconds.
      */
-    public void setTokenLifetimeInSeconds(int tokenLifetimeInSeconds) {
+    public void setTokenLifetimeInSeconds(long tokenLifetimeInSeconds) {
         this.tokenLifetimeInSeconds = tokenLifetimeInSeconds;
     }
 
@@ -315,7 +315,7 @@ public class DefaultJWTAuthority extends DefaultJWTConsumer implements JWTAuthor
      * @param sessionInvalidationDelayInMinutes
      *            Session invalidation delay in minutes.
      */
-    public void setSessionInvalidationDelayInMinutes(int sessionInvalidationDelayInMinutes) {
+    public void setSessionInvalidationDelayInMinutes(long sessionInvalidationDelayInMinutes) {
         this.sessionInvalidationDelayInMinutes = sessionInvalidationDelayInMinutes;
     }
 
