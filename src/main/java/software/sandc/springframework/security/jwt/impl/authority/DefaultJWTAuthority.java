@@ -1,15 +1,5 @@
 package software.sandc.springframework.security.jwt.impl.authority;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
-import io.jsonwebtoken.JwsHeader;
-import io.jsonwebtoken.JwtBuilder;
-import io.jsonwebtoken.JwtParser;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.UnsupportedJwtException;
-import io.jsonwebtoken.impl.TextCodec;
-
 import java.security.PrivateKey;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -20,6 +10,8 @@ import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.security.authentication.AccountStatusUserDetailsChecker;
 import org.springframework.security.core.GrantedAuthority;
@@ -32,6 +24,15 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.util.Assert;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
+import io.jsonwebtoken.JwsHeader;
+import io.jsonwebtoken.JwtBuilder;
+import io.jsonwebtoken.JwtParser;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.UnsupportedJwtException;
+import io.jsonwebtoken.impl.TextCodec;
 import software.sandc.springframework.security.jwt.authority.AuthorityKeyProvider;
 import software.sandc.springframework.security.jwt.authority.JWTAuthority;
 import software.sandc.springframework.security.jwt.authority.SessionProvider;
@@ -55,12 +56,13 @@ import software.sandc.springframework.security.jwt.util.RSAUtils;
 import software.sandc.springframework.security.jwt.util.StringUtils;
 
 public class DefaultJWTAuthority extends DefaultJWTConsumer implements JWTAuthority, InitializingBean {
+	
+	private static final Logger LOGGER = LoggerFactory.getLogger(DefaultJWTAuthority.class);
 
     protected UserDetailsService userDetailsService;
     protected SessionProvider sessionProvider;
     protected UserDetailsChecker userDetailsChecker;
-    protected int tokenLifetimeInSeconds = 600;
-    protected int sessionInvalidationDelayInMinutes = 5;
+    protected long tokenLifetimeInSeconds = 600;
     protected PasswordEncoder passwordEncoder;
     protected AuthorityKeyProvider authorityKeyProvider;
     protected boolean refreshSessionOnAuthentication = false;
@@ -72,19 +74,24 @@ public class DefaultJWTAuthority extends DefaultJWTConsumer implements JWTAuthor
 
     @Override
     public JWTContext authenticateJWTRequest(HttpServletRequest request, HttpServletResponse response) {
+    	LOGGER.trace("Start authenticate JWT Request");
         JWTContext jwtContext = null;
         TokenContainer tokenContainer = jwtRequestResponseHandler.getTokenFromRequest(request);
         if (tokenContainer != null) {
+        	LOGGER.trace("Token container found");
             try {
                 Parameters parameters = jwtRequestResponseHandler.getParametersFromRequest(request);
                 jwtContext = validate(tokenContainer, parameters);
             } catch (ExpiredTokenException e) {
+            	LOGGER.trace("JWT Token is expired.");
                 if (isTokenRenewalEnabled()) {
+                	LOGGER.trace("JWT Token will be renewed.");
                     Parameters parameters = jwtRequestResponseHandler.getParametersFromRequest(request);
                     jwtContext = renew(tokenContainer, parameters);
                 }
             }
             if (refreshSessionOnAuthentication) {
+            	LOGGER.trace("Token session will be refreshed.");
                 refreshSession(jwtContext);
             }
             handleJWTContext(request, response, jwtContext);
@@ -209,7 +216,8 @@ public class DefaultJWTAuthority extends DefaultJWTConsumer implements JWTAuthor
         if (sessionProvider == null) {
             throw new TokenRenewalException("No session provider found for token renewal.");
         }
-
+        LOGGER.trace("Renewing  JWT token");
+        
         boolean ignoreExpiry = true;
         Parameters renewParameters = new Parameters(parameters);
         renewParameters.put(new IgnoreExpiryParameter(ignoreExpiry));
@@ -224,6 +232,7 @@ public class DefaultJWTAuthority extends DefaultJWTConsumer implements JWTAuthor
         String principal = extractPrincipal(claims);
 
         if (sessionProvider.isSessionValid(sessionId)) {
+        	LOGGER.trace("Token session is valid");
             String renewedSessionId = sessionProvider.renewSession(sessionId);
             renewParameters.put(new SessionIdParameter(renewedSessionId));
             JWTContext jwtContext = create(principal, parameters);
@@ -232,6 +241,8 @@ public class DefaultJWTAuthority extends DefaultJWTConsumer implements JWTAuthor
             }
             return jwtContext;
         } else {
+        	String msg = "Token session does not exist or not valid anymore.";
+			LOGGER.trace(msg);
             throw new InvalidSessionException("Token session does not exist or not valid anymore.");
         }
     }
@@ -305,18 +316,8 @@ public class DefaultJWTAuthority extends DefaultJWTConsumer implements JWTAuthor
      * @param tokenLifetimeInSeconds
      *            Token lifetime in seconds.
      */
-    public void setTokenLifetimeInSeconds(int tokenLifetimeInSeconds) {
+    public void setTokenLifetimeInSeconds(long tokenLifetimeInSeconds) {
         this.tokenLifetimeInSeconds = tokenLifetimeInSeconds;
-    }
-
-    /**
-     * Set session invalidation delay in minutes.
-     * 
-     * @param sessionInvalidationDelayInMinutes
-     *            Session invalidation delay in minutes.
-     */
-    public void setSessionInvalidationDelayInMinutes(int sessionInvalidationDelayInMinutes) {
-        this.sessionInvalidationDelayInMinutes = sessionInvalidationDelayInMinutes;
     }
 
     /**
@@ -387,9 +388,11 @@ public class DefaultJWTAuthority extends DefaultJWTConsumer implements JWTAuthor
     }
 
     protected void refreshSession(JWTContext jwtContext) {
+    	LOGGER.trace("Refreshing token session");
         if (jwtContext != null && jwtContext.isAuthenticated() && sessionProvider != null) {
             JWTAuthentication authentication = jwtContext.getAuthentication();
             sessionProvider.refreshSession(authentication.getSessionId());
+            LOGGER.trace("Token session is refreshed");
         }
     }
 

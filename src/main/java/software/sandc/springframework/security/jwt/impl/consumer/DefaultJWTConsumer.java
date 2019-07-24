@@ -8,6 +8,8 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
@@ -38,8 +40,10 @@ import software.sandc.springframework.security.jwt.model.parameter.Parameters;
 import software.sandc.springframework.security.jwt.util.BooleanUtils;
 
 public class DefaultJWTConsumer implements JWTConsumer, InitializingBean  {
+	
+	private static final Logger LOGGER = LoggerFactory.getLogger(DefaultJWTConsumer.class);
     
-    protected static final Integer TEN_YEARS_IN_SECONDS = 315360000;
+    protected static final long TEN_YEARS_IN_SECONDS = 315360000;
     
     public static final String SPRING_SECURITY_JWT_XSRF_PARAMETER_NAME = "xsrf-token";
     public static final String SPRING_SECURITY_JWT_SESSION_ID_PARAMETER_NAME = "jti";   
@@ -73,6 +77,7 @@ public class DefaultJWTConsumer implements JWTConsumer, InitializingBean  {
 
     @Override
     public JWTContext authenticateJWTRequest(HttpServletRequest request, HttpServletResponse response) {
+    	LOGGER.trace("Authenticate JWT request");
         JWTContext jwtContext = null;
         TokenContainer tokenContainer = jwtRequestResponseHandler.getTokenFromRequest(request);
         if (tokenContainer != null) {
@@ -90,6 +95,7 @@ public class DefaultJWTConsumer implements JWTConsumer, InitializingBean  {
     @Override
     public JWTContext validate(TokenContainer tokenContainer, Parameters parameters)
             throws InvalidTokenException, ExpiredTokenException {
+    	LOGGER.trace("Validate token container: {} with parameters: {}", tokenContainer, parameters);
         if (tokenContainer == null) {
             throw new InvalidTokenException("Token container is empty");
         }
@@ -110,9 +116,12 @@ public class DefaultJWTConsumer implements JWTConsumer, InitializingBean  {
             JWTContext jwtContext = createJWTContext(principal, sessionId, xsrfToken, authorities, jwtMode, jwtToken);
             return jwtContext;
         } catch (ExpiredJwtException e) {
-            throw new ExpiredTokenException("JWT Token is expired.");
+        	String msg = "JWT Token is expired.";
+			LOGGER.trace(msg);
+            throw new ExpiredTokenException(msg);
         } catch (JwtException e) {
-            throw new InvalidTokenException("JWT Token is invalid.", e);
+        	String msg = "JWT Token is invalid.";
+            throw new InvalidTokenException(msg, e);
         }
     }
 
