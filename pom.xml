@@ -2,7 +2,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>software.sandc.labs</groupId>
 	<artifactId>sandc-spring-security-jwt</artifactId>
-	<version>0.2.5-SNAPSHOT</version>
+	<version>0.3.0-SNAPSHOT</version>
 	<name>S&amp;C Spring Security JWT Extension</name>
 	<description>A custom Spring Security JWT extension for Spring Web Applications developed by S&amp;C Software. Please note that this is NOT an official Spring extension.</description>
 
