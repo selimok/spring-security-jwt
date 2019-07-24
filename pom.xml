@@ -14,7 +14,7 @@
 		<servlet-api.version>3.1.0</servlet-api.version>
 		<spring-security.version>4.2.2.RELEASE</spring-security.version>
 		<jjwt.version>0.7.0</jjwt.version>
-		<jgitflow.version>1.0-m5</jgitflow.version>
+		<jgitflow.version>1.0-m5.1</jgitflow.version>
 		<slf4j.version>1.7.22</slf4j.version>
 	</properties>
 
@@ -73,6 +73,13 @@
 						<hotfixBranchPrefix>hotfix/</hotfixBranchPrefix>
 					</flowInitContext>
 				</configuration>
+				<dependencies>
+				    <dependency>
+				      	<groupId>com.jcraft</groupId>
+				      	<artifactId>jsch</artifactId>
+				      	<version>0.1.54</version>
+					</dependency>
+				</dependencies>
 			</plugin>
 		</plugins>
 	</build>
@@ -171,12 +178,12 @@
 			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
 		</repository>
 	</distributionManagement>
-       <url>https://github.com/selimok/spring-security-jwt</url>
-       <licenses>
-               <license>
-                       <name>Apache License, Version 2.0</name>
-                       <url>http://www.apache.org/licenses/LICENSE-2.0</url>
-                       <distribution>repo</distribution>
-               </license>
-       </licenses>
+	<url>https://github.com/selimok/spring-security-jwt</url>
+	<licenses>
+		<license>
+			<name>Apache License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
 </project>
