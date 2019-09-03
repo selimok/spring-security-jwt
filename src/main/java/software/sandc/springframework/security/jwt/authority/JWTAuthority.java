@@ -14,6 +14,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.security.authentication.AccountStatusUserDetailsChecker;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -23,6 +26,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
@@ -59,6 +63,7 @@ public class JWTAuthority extends JWTConsumer implements InitializingBean {
     private static final Logger LOGGER = LoggerFactory.getLogger(JWTAuthority.class);
 
     protected UserDetailsService userDetailsService;
+    protected List<AuthenticationProvider> authProviders;
     protected SessionProvider sessionProvider;
     protected UserDetailsChecker userDetailsChecker;
     protected int tokenLifetimeInSeconds = 600;
@@ -99,13 +104,35 @@ public class JWTAuthority extends JWTConsumer implements InitializingBean {
         JWTContext jwtContext = null;
         String password = credentials.getPassword();
         String principal = credentials.getPrincipal();
+
         if (principal != null && password != null) {
-            UserDetails userDetails = userDetailsService.loadUserByUsername(principal);
-            if (passwordEncoder.matches(password, userDetails.getPassword())) {
+
+            boolean authenticated = false;
+
+            if (CollectionUtils.isEmpty(authProviders)) {
+                UserDetails userDetails = userDetailsService.loadUserByUsername(principal);
+                if (userDetails.getPassword() != null && (!"".equals(userDetails.getPassword().trim()))
+                        && passwordEncoder.matches(password, userDetails.getPassword())) {
+                    authenticated = true;
+                }
+            } else {
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(principal,
+                        password);
+                for (AuthenticationProvider authProvider : authProviders) {
+                    Authentication authenticate = authProvider.authenticate(authentication);
+                    if (authenticate.isAuthenticated()) {
+                        authenticated = true;
+                        break;
+                    }
+                }
+            }
+
+            if (authenticated) {
                 Parameters parameters = jwtRequestResponseHandler.getParametersFromRequest(request);
                 jwtContext = create(principal, parameters);
                 handleJWTContext(request, response, jwtContext);
             }
+
         }
         return jwtContext;
     }
@@ -299,6 +326,14 @@ public class JWTAuthority extends JWTConsumer implements InitializingBean {
 
     public void setUserDetailsService(UserDetailsService userDetailsService) {
         this.userDetailsService = userDetailsService;
+    }
+
+    public void setAuthProviders(List<AuthenticationProvider> authProviders) {
+        this.authProviders = authProviders;
+    }
+
+    public List<AuthenticationProvider> getAuthProviders() {
+        return this.authProviders;
     }
 
     public void setSessionProvider(SessionProvider sessionProvider) {
